@@ -12,6 +12,11 @@ class Paper(BaseModel):
     year: Optional[int] = None
     doi: Optional[str] = None
     url: Optional[str] = None
+    pdf_path: Optional[str] = None
+    full_text: Optional[str] = None
+    needs_review: int = 0
+    ingest_notes: Optional[str] = None
+    added_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
 
     class Config:

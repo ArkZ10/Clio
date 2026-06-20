@@ -27,9 +27,29 @@ def init_db(db_path):
             year INTEGER,
             doi TEXT,
             url TEXT,
+            pdf_path TEXT,
+            full_text TEXT,
+            needs_review INTEGER DEFAULT 0,
+            ingest_notes TEXT,
+            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+
+    # Add new columns if they don't exist (schema migration)
+    cursor.execute("PRAGMA table_info(paper)")
+    columns = {row[1] for row in cursor.fetchall()}
+
+    if "pdf_path" not in columns:
+        cursor.execute("ALTER TABLE paper ADD COLUMN pdf_path TEXT")
+    if "full_text" not in columns:
+        cursor.execute("ALTER TABLE paper ADD COLUMN full_text TEXT")
+    if "needs_review" not in columns:
+        cursor.execute("ALTER TABLE paper ADD COLUMN needs_review INTEGER DEFAULT 0")
+    if "ingest_notes" not in columns:
+        cursor.execute("ALTER TABLE paper ADD COLUMN ingest_notes TEXT")
+    if "added_at" not in columns:
+        cursor.execute("ALTER TABLE paper ADD COLUMN added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
 
     # Create vec_bge_m3 virtual table (1024-dim, cosine distance)
     cursor.execute("""
@@ -45,3 +65,19 @@ def init_db(db_path):
 
     db.commit()
     db.close()
+
+
+def has_embedding(db, paper_id, vec_table) -> bool:
+    cursor = db.cursor()
+    cursor.execute(f"SELECT 1 FROM {vec_table} WHERE paper_id = ?", (paper_id,))
+    return cursor.fetchone() is not None
+
+
+def insert_embedding(db, vec_table, paper_id, vector):
+    vector_list = [float(x) for x in vector]
+    cursor = db.cursor()
+    cursor.execute(
+        f"INSERT INTO {vec_table} (paper_id, embedding) VALUES (?, ?)",
+        (paper_id, serialize_float32(vector_list)),
+    )
+    db.commit()
