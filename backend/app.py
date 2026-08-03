@@ -1,8 +1,21 @@
 from fastapi import FastAPI
-from backend.config import DB_PATH
+from fastapi.middleware.cors import CORSMiddleware
+from backend.config import DB_PATH, HOST, PORT
 from backend import db
+from backend.routes.library import router as library_router
+from backend.routes.explore import router as explore_router
 
 app = FastAPI(title="Clio")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(library_router)
+app.include_router(explore_router)
 
 
 @app.on_event("startup")
@@ -13,3 +26,9 @@ async def startup_event():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host=HOST, port=PORT)

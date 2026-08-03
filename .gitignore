@@ -21,3 +21,37 @@ env/
 htmlcov/
 *.coverage
 *.pdf
+
+# llm_switch secrets/registry live at ~/.llm_switch/ (outside the repo), but
+# guard against them ever landing inside it too.
+.llm_switch/
+endpoints.json
+.key
+
+# throwaway diagnostic spike output
+spike_out/
+
+docs/
+.claude/
+
+# --- web/ (TanStack Start + Vite UI) ---
+# web/.gitignore also covers most of these; these root-level entries are
+# explicit so the ignores survive independently of that nested file.
+node_modules/
+web/node_modules/
+web/dist/
+web/.output/
+web/.nitro/
+web/.vinxi/
+web/.tanstack/
+web/.wrangler/
+web/.dev.vars
+
+# env files: every variant is ignored EXCEPT the committed *.env.example
+# templates, which document required vars without holding real values.
+.env
+.env.*
+web/.env
+web/.env.*
+!.env.example
+!web/.env.example

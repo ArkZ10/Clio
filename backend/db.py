@@ -50,6 +50,17 @@ def init_db(db_path):
         cursor.execute("ALTER TABLE paper ADD COLUMN ingest_notes TEXT")
     if "added_at" not in columns:
         cursor.execute("ALTER TABLE paper ADD COLUMN added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    if "arxiv_id" not in columns:
+        cursor.execute("ALTER TABLE paper ADD COLUMN arxiv_id TEXT")
+    if "categories" not in columns:
+        cursor.execute("ALTER TABLE paper ADD COLUMN categories TEXT")
+
+    # Dedup key for explore: at most one paper per arXiv ID, but many rows
+    # (library PDFs) can have arxiv_id NULL.
+    cursor.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_paper_arxiv_id "
+        "ON paper(arxiv_id) WHERE arxiv_id IS NOT NULL"
+    )
 
     # Create vec_bge_m3 virtual table (1024-dim, cosine distance)
     cursor.execute("""
@@ -61,6 +72,41 @@ def init_db(db_path):
     cursor.execute("""
         CREATE VIRTUAL TABLE IF NOT EXISTS vec_specter2
         USING vec0(paper_id integer primary key, embedding float[768])
+    """)
+
+    # Graph edges, tagged by layer (= which embedder produced them)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS graph_edge (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            src_paper_id INTEGER NOT NULL,
+            dst_paper_id INTEGER NOT NULL,
+            layer TEXT NOT NULL,
+            weight REAL NOT NULL
+        )
+    """)
+
+    # Clusters (exploration_id NULL for library clusters)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cluster (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            exploration_id INTEGER,
+            label TEXT,
+            summary TEXT
+        )
+    """)
+
+    # Add new columns if they don't exist (schema migration)
+    cursor.execute("PRAGMA table_info(cluster)")
+    cluster_columns = {row[1] for row in cursor.fetchall()}
+
+    if "llm_label" not in cluster_columns:
+        cursor.execute("ALTER TABLE cluster ADD COLUMN llm_label TEXT")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS paper_cluster (
+            paper_id INTEGER NOT NULL,
+            cluster_id INTEGER NOT NULL
+        )
     """)
 
     db.commit()

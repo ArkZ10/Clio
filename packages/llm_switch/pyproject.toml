@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm_switch"
+version = "0.1.0"
+description = "Swappable local/cloud LLM endpoint registry and call layer"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx",
+    "cryptography",
+]
+
+[tool.setuptools.packages.find]
+include = ["llm_switch*"]

@@ -1,0 +1,900 @@
+{
+  "discrete diffusion language models|25": {
+    "date": "2026-06-24",
+    "results": [
+      {
+        "arxiv_id": "2602.07546",
+        "title": "Improving Variable-Length Generation in Diffusion Language Models via Length Regularization",
+        "abstract": "Diffusion Large Language Models (DLLMs) are inherently ill-suited for variable-length generation, as their inference is defined on a fixed-length canvas and implicitly assumes a known target length. When the length is unknown, as in realistic completion and infilling, naively comparing confidence across mask lengths becomes systematically biased, leading to under-generation or redundant continuations. In this paper, we show that this failure arises from an intrinsic lengthinduced bias in generation confidence estimates, leaving existing DLLMs without a robust way to determine generation length and making variablelength inference unreliable. To address this issue, we propose LR-DLLM, a length-regularized inference framework for DLLMs that treats generation length as an explicit variable and achieves reliable length determination at inference time. It decouples semantic compatibility from lengthinduced uncertainty through an explicit length regularization that corrects biased confidence estimates. Based on this, LR-DLLM enables dynamic expansion or contraction of the generation span without modifying the underlying DLLM or its training procedure. Experiments show that LRDLLM achieves 51.3% Pass@1 on HumanEvalInfilling under fully unknown lengths (+13.4% vs. DreamOn) and 51.5% average Pass@1 on four-language McEval (+14.3% vs. DreamOn).",
+        "authors": [
+          "Zicong Cheng",
+          "Ruixuan Jia",
+          "Jia Li",
+          "Guo-Wei Yang",
+          "Meng-Hao Guo",
+          "Shi-Min Hu"
+        ],
+        "year": 2026,
+        "categories": [
+          "cs.CL",
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2602.07546v1"
+      },
+      {
+        "arxiv_id": "2402.03701",
+        "title": "Unified Discrete Diffusion for Categorical Data",
+        "abstract": "Discrete diffusion models have seen a surge of attention with applications on naturally discrete data such as language and graphs. Although discrete-time discrete diffusion has been established for a while, only recently Campbell et al. (2022) introduced the first framework for continuous-time discrete diffusion. However, their training and sampling processes differ significantly from the discrete-time version, necessitating nontrivial approximations for tractability. In this paper, we first present a series of mathematical simplifications of the variational lower bound that enable more accurate and easy-to-optimize training for discrete diffusion. In addition, we derive a simple formulation for backward denoising that enables exact and accelerated sampling, and importantly, an elegant unification of discrete-time and continuous-time discrete diffusion. Thanks to simpler analytical formulations, both forward and now also backward probabilities can flexibly accommodate any noise distribution, including different noise distributions for multi-element objects. Experiments show that our proposed USD3 (for Unified Simplified Discrete Denoising Diffusion) outperform all SOTA baselines on established datasets. We open-source our unified code at https://github.com/LingxiaoShawn/USD3.",
+        "authors": [
+          "Lingxiao Zhao",
+          "Xueying Ding",
+          "Lijun Yu",
+          "Leman Akoglu"
+        ],
+        "year": 2024,
+        "categories": [
+          "cs.LG",
+          "stat.ML"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2402.03701v2"
+      },
+      {
+        "arxiv_id": "2302.05737",
+        "title": "A Reparameterized Discrete Diffusion Model for Text Generation",
+        "abstract": "This work studies discrete diffusion probabilistic models with applications to natural language generation. We derive an alternative yet equivalent formulation of the sampling from discrete diffusion processes and leverage this insight to develop a family of reparameterized discrete diffusion models. The derived generic framework is highly flexible, offers a fresh perspective of the generation process in discrete diffusion models, and features more effective training and decoding techniques. We conduct extensive experiments to evaluate the text generation capability of our model, demonstrating significant improvements over existing diffusion models.",
+        "authors": [
+          "Lin Zheng",
+          "Jianbo Yuan",
+          "Lei Yu",
+          "Lingpeng Kong"
+        ],
+        "year": 2023,
+        "categories": [
+          "cs.CL",
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2302.05737v3"
+      },
+      {
+        "arxiv_id": "2310.16834",
+        "title": "Discrete Diffusion Modeling by Estimating the Ratios of the Data Distribution",
+        "abstract": "Despite their groundbreaking performance for many generative modeling tasks, diffusion models have fallen short on discrete data domains such as natural language. Crucially, standard diffusion models rely on the well-established theory of score matching, but efforts to generalize this to discrete structures have not yielded the same empirical gains. In this work, we bridge this gap by proposing score entropy, a novel loss that naturally extends score matching to discrete spaces, integrates seamlessly to build discrete diffusion models, and significantly boosts performance. Experimentally, we test our Score Entropy Discrete Diffusion models (SEDD) on standard language modeling tasks. For comparable model sizes, SEDD beats existing language diffusion paradigms (reducing perplexity by $25$-$75$\\%) and is competitive with autoregressive models, in particular outperforming GPT-2. Furthermore, compared to autoregressive mdoels, SEDD generates faithful text without requiring distribution annealing techniques like temperature scaling (around $6$-$8\\times$ better generative perplexity than un-annealed GPT-2), can trade compute and quality (similar quality with $32\\times$ fewer network evaluations), and enables controllable infilling (matching nucleus sampling quality while enabling other strategies besides left to right prompting).",
+        "authors": [
+          "Aaron Lou",
+          "Chenlin Meng",
+          "Stefano Ermon"
+        ],
+        "year": 2023,
+        "categories": [
+          "stat.ML",
+          "cs.CL",
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2310.16834v3"
+      },
+      {
+        "arxiv_id": "2412.10193",
+        "title": "Simple Guidance Mechanisms for Discrete Diffusion Models",
+        "abstract": "Diffusion models for continuous data gained widespread adoption owing to their high quality generation and control mechanisms. However, controllable diffusion on discrete data faces challenges given that continuous guidance methods do not directly apply to discrete diffusion. Here, we provide a straightforward derivation of classifier-free and classifier-based guidance for discrete diffusion, as well as a new class of diffusion models that leverage uniform noise and that are more guidable because they can continuously edit their outputs. We improve the quality of these models with a novel continuous-time variational lower bound that yields state-of-the-art performance, especially in settings involving guidance or fast generation. Empirically, we demonstrate that our guidance mechanisms combined with uniform noise diffusion improve controllable generation relative to autoregressive and diffusion baselines on several discrete data domains, including genomic sequences, small molecule design, and discretized image generation.",
+        "authors": [
+          "Yair Schiff",
+          "Subham Sekhar Sahoo",
+          "Hao Phung",
+          "Guanghan Wang",
+          "Sam Boshar",
+          "Hugo Dalla-torre",
+          "Bernardo P. de Almeida",
+          "Alexander Rush",
+          "Thomas Pierrot",
+          "Volodymyr Kuleshov"
+        ],
+        "year": 2024,
+        "categories": [
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2412.10193v3"
+      },
+      {
+        "arxiv_id": "2210.15629",
+        "title": "Language Control Diffusion: Efficiently Scaling through Space, Time, and Tasks",
+        "abstract": "Training generalist agents is difficult across several axes, requiring us to deal with high-dimensional inputs (space), long horizons (time), and generalization to novel tasks. Recent advances with architectures have allowed for improved scaling along one or two of these axes, but are still computationally prohibitive to use. In this paper, we propose to address all three axes by leveraging \\textbf{L}anguage to \\textbf{C}ontrol \\textbf{D}iffusion models as a hierarchical planner conditioned on language (LCD). We effectively and efficiently scale diffusion models for planning in extended temporal, state, and task dimensions to tackle long horizon control problems conditioned on natural language instructions, as a step towards generalist agents. Comparing LCD with other state-of-the-art models on the CALVIN language robotics benchmark finds that LCD outperforms other SOTA methods in multi-task success rates, whilst improving inference speed over other comparable diffusion models by 3.3x~15x. We show that LCD can successfully leverage the unique strength of diffusion models to produce coherent long range plans while addressing their weakness in generating low-level details and control.",
+        "authors": [
+          "Edwin Zhang",
+          "Yujie Lu",
+          "Shinda Huang",
+          "William Wang",
+          "Amy Zhang"
+        ],
+        "year": 2022,
+        "categories": [
+          "cs.LG",
+          "cs.AI",
+          "cs.CL"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2210.15629v4"
+      },
+      {
+        "arxiv_id": "2605.22586",
+        "title": "A Tutorial on Diffusion Theory: From Differential Equations to Diffusion Models",
+        "abstract": "Diffusion models have emerged as a dominant framework for generative modeling, but their mathematical foundations are often presented separately through diffusion probabilistic models, score-based modeling, stochastic differential equations, and numerical sampling methods. We write this tutorial to provide a unified and self-contained account of these viewpoints from the perspective of differential equations. Starting from a conditional Gaussian noising process, we derive ordinary differential equation (ODE) and stochastic differential equation (SDE) representations, pass to the corresponding marginal forward dynamics, and then obtain the reverse-time SDE and probability-flow ODE that make generation possible. We show that the central unknown quantity in reverse sampling is the marginal score, explain how score matching becomes the standard denoising objective under a noise-prediction parameterization, and discuss practical reverse-time sampling and guidance. We further place DDPM, DDIM, flow matching, and score-based SDEs in a common framework, and conclude with diffusion language models in continuous embedding space together with a brief discussion of discrete masked-token diffusion. The tutorial is intended as a bridge between the analytical foundations of diffusion processes and the modern generative algorithms built upon them.",
+        "authors": [
+          "Jiayi Fu",
+          "Yuxia Wang"
+        ],
+        "year": 2026,
+        "categories": [
+          "cs.LG",
+          "cs.CL"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2605.22586v3"
+      },
+      {
+        "arxiv_id": "2503.21676",
+        "title": "How do language models learn facts? Dynamics, curricula and hallucinations",
+        "abstract": "Large language models accumulate vast knowledge during pre-training, yet the dynamics governing this acquisition remain poorly understood. This work investigates the learning dynamics of language models on a synthetic factual recall task, uncovering three key findings: First, language models learn in three phases, exhibiting a performance plateau before acquiring precise factual knowledge. Mechanistically, this plateau coincides with the formation of attention-based circuits that support recall. Second, the training data distribution significantly impacts learning dynamics, as imbalanced distributions lead to shorter plateaus. Finally, hallucinations emerge simultaneously with knowledge, and integrating new knowledge into the model through fine-tuning is challenging, as it quickly corrupts its existing parametric memories. Our results emphasize the importance of data distribution in knowledge acquisition and suggest novel data scheduling strategies to accelerate neural network training.",
+        "authors": [
+          "Nicolas Zucchet",
+          "J\u00f6rg Bornschein",
+          "Stephanie Chan",
+          "Andrew Lampinen",
+          "Razvan Pascanu",
+          "Soham De"
+        ],
+        "year": 2025,
+        "categories": [
+          "cs.CL",
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2503.21676v2"
+      },
+      {
+        "arxiv_id": "2602.05961",
+        "title": "Discrete diffusion samplers and bridges: Off-policy algorithms and applications in latent spaces",
+        "abstract": "Sampling from a distribution $p(x) \\propto e^{-\\mathcal{E}(x)}$ known up to a normalising constant is an important and challenging problem in statistics. Recent years have seen the rise of a new family of amortised sampling algorithms, commonly referred to as diffusion samplers, that enable fast and efficient sampling from an unnormalised density. Such algorithms have been widely studied for continuous-space sampling tasks; however, their application to problems in discrete space remains largely unexplored. Although some progress has been made in this area, discrete diffusion samplers do not take full advantage of ideas commonly used for continuous-space sampling. In this paper, we propose to bridge this gap by introducing off-policy training techniques for discrete diffusion samplers. We show that these techniques improve the performance of discrete samplers on both established and new synthetic benchmarks. Next, we generalise discrete diffusion samplers to the task of bridging between two arbitrary distributions, introducing data-to-energy Schr\u00f6dinger bridge training for the discrete domain for the first time. Lastly, we showcase the application of the proposed diffusion samplers to data-free posterior sampling in the discrete latent spaces of image generative models.",
+        "authors": [
+          "Arran Carter",
+          "Sanghyeok Choi",
+          "Kirill Tamogashev",
+          "V\u00edctor Elvira",
+          "Esmeralda S. Whitammer"
+        ],
+        "year": 2026,
+        "categories": [
+          "cs.LG",
+          "stat.ML"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2602.05961v3"
+      },
+      {
+        "arxiv_id": "2304.04746",
+        "title": "A Cheaper and Better Diffusion Language Model with Soft-Masked Noise",
+        "abstract": "Diffusion models that are based on iterative denoising have been recently proposed and leveraged in various generation tasks like image generation. Whereas, as a way inherently built for continuous data, existing diffusion models still have some limitations in modeling discrete data, e.g., languages. For example, the generally used Gaussian noise can not handle the discrete corruption well, and the objectives in continuous spaces fail to be stable for textual data in the diffusion process especially when the dimension is high. To alleviate these issues, we introduce a novel diffusion model for language modeling, Masked-Diffuse LM, with lower training cost and better performances, inspired by linguistic features in languages. Specifically, we design a linguistic-informed forward process which adds corruptions to the text through strategically soft-masking to better noise the textual data. Also, we directly predict the categorical distribution with cross-entropy loss function in every diffusion step to connect the continuous space and discrete space in a more efficient and straightforward way. Through experiments on 5 controlled generation tasks, we demonstrate that our Masked-Diffuse LM can achieve better generation quality than the state-of-the-art diffusion models with better efficiency.",
+        "authors": [
+          "Jiaao Chen",
+          "Aston Zhang",
+          "Mu Li",
+          "Alex Smola",
+          "Diyi Yang"
+        ],
+        "year": 2023,
+        "categories": [
+          "cs.CL",
+          "cs.AI"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2304.04746v1"
+      },
+      {
+        "arxiv_id": "2211.15029",
+        "title": "DiffusionBERT: Improving Generative Masked Language Models with Diffusion Models",
+        "abstract": "We present DiffusionBERT, a new generative masked language model based on discrete diffusion models. Diffusion models and many pre-trained language models have a shared training objective, i.e., denoising, making it possible to combine the two powerful models and enjoy the best of both worlds. On the one hand, diffusion models offer a promising training strategy that helps improve the generation quality. On the other hand, pre-trained denoising language models (e.g., BERT) can be used as a good initialization that accelerates convergence. We explore training BERT to learn the reverse process of a discrete diffusion process with an absorbing state and elucidate several designs to improve it. First, we propose a new noise schedule for the forward diffusion process that controls the degree of noise added at each step based on the information of each token. Second, we investigate several designs of incorporating the time step into BERT. Experiments on unconditional text generation demonstrate that DiffusionBERT achieves significant improvement over existing diffusion models for text (e.g., D3PM and Diffusion-LM) and previous generative masked language models in terms of perplexity and BLEU score.",
+        "authors": [
+          "Zhengfu He",
+          "Tianxiang Sun",
+          "Kuanning Wang",
+          "Xuanjing Huang",
+          "Xipeng Qiu"
+        ],
+        "year": 2022,
+        "categories": [
+          "cs.CL",
+          "cs.AI",
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2211.15029v2"
+      },
+      {
+        "arxiv_id": "2409.02228",
+        "title": "Unforgettable Generalization in Language Models",
+        "abstract": "When language models (LMs) are trained to forget (or \"unlearn'') a skill, how precisely does their behavior change? We study the behavior of transformer LMs in which tasks have been forgotten via fine-tuning on randomized labels. Such LMs learn to generate near-random predictions for individual examples in the \"training'' set used for forgetting. Across tasks, however, LMs exhibit extreme variability in whether LM predictions change on examples outside the training set. In some tasks (like entailment classification), forgetting generalizes robustly, and causes models to produce uninformative predictions on new task instances; in other tasks (like physical commonsense reasoning and scientific question answering) forgetting affects only the training examples, and models continue to perform the \"forgotten'' task accurately even for examples very similar to those that appeared in the training set. Dataset difficulty is not predictive of whether a behavior can be forgotten; instead, generalization in forgetting is (weakly) predicted by the confidence of LMs' initial task predictions and the variability of LM representations of training data, with low confidence and low variability both associated with greater generalization. Perhaps most surprisingly, random-label forgetting appears to be somewhat insensitive to the contents of the training set: for example, models trained on science questions with random labels continue to answer other science questions accurately, but begin to produce random labels on entailment classification tasks. Finally, we show that even generalizable forgetting is shallow: linear probes trained on LMs' representations can still perform tasks reliably after forgetting. Our results highlight the difficulty and unpredictability of performing targeted skill removal from models via fine-tuning.",
+        "authors": [
+          "Eric Zhang",
+          "Leshem Chosen",
+          "Jacob Andreas"
+        ],
+        "year": 2024,
+        "categories": [
+          "cs.LG",
+          "cs.CL"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2409.02228v1"
+      },
+      {
+        "arxiv_id": "2603.01691",
+        "title": "Building a Strong Instruction Language Model for a Less-Resourced Language",
+        "abstract": "Large language models (LLMs) have become an essential tool for natural language processing and artificial intelligence in general. Current open-source models are primarily trained on English texts, resulting in poorer performance on less-resourced languages and cultures. We present a set of methodological approaches necessary for the successful adaptation of an LLM to a less-resourced language, and demonstrate them using the Slovene language. We present GaMS3-12B, a generative model for Slovene with 12 billion parameters, and demonstrate that it is the best-performing open-source model for Slovene within its parameter range. We adapted the model to the Slovene language using three-stage continual pre-training of the Gemma 3 model, followed by two-stage supervised fine-tuning (SFT). We trained the model on a combination of 140B Slovene, English, Bosnian, Serbian, and Croatian pretraining tokens, and over 200 thousand English and Slovene SFT examples. We evaluate GaMS3-12B on the Slovenian-LLM-Eval datasets, English-to-Slovene translation, and the Slovene LLM arena. We show that the described model outperforms 12B Gemma 3 across all three scenarios and performs comparably to much larger commercial GPT-4o in the Slovene LLM arena, achieving a win rate of over 60 %.",
+        "authors": [
+          "Domen Vre\u0161",
+          "Tja\u0161a Ar\u010don",
+          "Timotej Petri\u010d",
+          "Dario Vajda",
+          "Marko Robnik-\u0160ikonja",
+          "Iztok Lebar Bajec"
+        ],
+        "year": 2026,
+        "categories": [
+          "cs.CL",
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2603.01691v1"
+      },
+      {
+        "arxiv_id": "2412.16365",
+        "title": "Overview of the First Workshop on Language Models for Low-Resource Languages (LoResLM 2025)",
+        "abstract": "The first Workshop on Language Models for Low-Resource Languages (LoResLM 2025) was held in conjunction with the 31st International Conference on Computational Linguistics (COLING 2025) in Abu Dhabi, United Arab Emirates. This workshop mainly aimed to provide a forum for researchers to share and discuss their ongoing work on language models (LMs) focusing on low-resource languages, following the recent advancements in neural language models and their linguistic biases towards high-resource languages. LoResLM 2025 attracted notable interest from the natural language processing (NLP) community, resulting in 35 accepted papers from 52 submissions. These contributions cover a broad range of low-resource languages from eight language families and 13 diverse research areas, paving the way for future possibilities and promoting linguistic inclusivity in NLP.",
+        "authors": [
+          "Hansi Hettiarachchi",
+          "Tharindu Ranasinghe",
+          "Paul Rayson",
+          "Ruslan Mitkov",
+          "Mohamed Gaber",
+          "Damith Premasiri",
+          "Fiona Anting Tan",
+          "Lasitha Uyangodage"
+        ],
+        "year": 2024,
+        "categories": [
+          "cs.CL",
+          "cs.AI"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2412.16365v1"
+      },
+      {
+        "arxiv_id": "1610.00031",
+        "title": "Discriminating Similar Languages: Evaluations and Explorations",
+        "abstract": "We present an analysis of the performance of machine learning classifiers on discriminating between similar languages and language varieties. We carried out a number of experiments using the results of the two editions of the Discriminating between Similar Languages (DSL) shared task. We investigate the progress made between the two tasks, estimate an upper bound on possible performance using ensemble and oracle combination, and provide learning curves to help us understand which languages are more challenging. A number of difficult sentences are identified and investigated further with human annotation.",
+        "authors": [
+          "Cyril Goutte",
+          "Serge L\u00e9ger",
+          "Shervin Malmasi",
+          "Marcos Zampieri"
+        ],
+        "year": 2016,
+        "categories": [
+          "cs.CL"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/1610.00031v1"
+      },
+      {
+        "arxiv_id": "2407.01606",
+        "title": "On Discrete Prompt Optimization for Diffusion Models",
+        "abstract": "This paper introduces the first gradient-based framework for prompt optimization in text-to-image diffusion models. We formulate prompt engineering as a discrete optimization problem over the language space. Two major challenges arise in efficiently finding a solution to this problem: (1) Enormous Domain Space: Setting the domain to the entire language space poses significant difficulty to the optimization process. (2) Text Gradient: Efficiently computing the text gradient is challenging, as it requires backpropagating through the inference steps of the diffusion model and a non-differentiable embedding lookup table. Beyond the problem formulation, our main technical contributions lie in solving the above challenges. First, we design a family of dynamically generated compact subspaces comprised of only the most relevant words to user input, substantially restricting the domain space. Second, we introduce \"Shortcut Text Gradient\" -- an effective replacement for the text gradient that can be obtained with constant memory and runtime. Empirical evaluation on prompts collected from diverse sources (DiffusionDB, ChatGPT, COCO) suggests that our method can discover prompts that substantially improve (prompt enhancement) or destroy (adversarial attack) the faithfulness of images generated by the text-to-image diffusion model.",
+        "authors": [
+          "Ruochen Wang",
+          "Ting Liu",
+          "Cho-Jui Hsieh",
+          "Boqing Gong"
+        ],
+        "year": 2024,
+        "categories": [
+          "cs.LG",
+          "cs.AI",
+          "cs.CL",
+          "cs.CV",
+          "stat.ML"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2407.01606v1"
+      },
+      {
+        "arxiv_id": "2408.13040",
+        "title": "SpeechPrompt: Prompting Speech Language Models for Speech Processing Tasks",
+        "abstract": "Prompting has become a practical method for utilizing pre-trained language models (LMs). This approach offers several advantages. It allows an LM to adapt to new tasks with minimal training and parameter updates, thus achieving efficiency in both storage and computation. Additionally, prompting modifies only the LM's inputs and harnesses the generative capabilities of language models to address various downstream tasks in a unified manner. This significantly reduces the need for human labor in designing task-specific models. These advantages become even more evident as the number of tasks served by the LM scales up. Motivated by the strengths of prompting, we are the first to explore the potential of prompting speech LMs in the domain of speech processing. Recently, there has been a growing interest in converting speech into discrete units for language modeling. Our pioneer research demonstrates that these quantized speech units are highly versatile within our unified prompting framework. Not only can they serve as class labels, but they also contain rich phonetic information that can be re-synthesized back into speech signals for speech generation tasks. Specifically, we reformulate speech processing tasks into speech-to-unit generation tasks. As a result, we can seamlessly integrate tasks such as speech classification, sequence generation, and speech generation within a single, unified prompting framework. The experiment results show that the prompting method can achieve competitive performance compared to the strong fine-tuning method based on self-supervised learning models with a similar number of trainable parameters. The prompting method also shows promising results in the few-shot setting. Moreover, with the advanced speech LMs coming into the stage, the proposed prompting framework attains great potential.",
+        "authors": [
+          "Kai-Wei Chang",
+          "Haibin Wu",
+          "Yu-Kai Wang",
+          "Yuan-Kuei Wu",
+          "Hua Shen",
+          "Wei-Cheng Tseng",
+          "Iu-thing Kang",
+          "Shang-Wen Li",
+          "Hung-yi Lee"
+        ],
+        "year": 2024,
+        "categories": [
+          "eess.AS",
+          "cs.AI",
+          "cs.CL",
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2408.13040v1"
+      },
+      {
+        "arxiv_id": "2403.17811",
+        "title": "Are Compressed Language Models Less Subgroup Robust?",
+        "abstract": "To reduce the inference cost of large language models, model compression is increasingly used to create smaller scalable models. However, little is known about their robustness to minority subgroups defined by the labels and attributes of a dataset. In this paper, we investigate the effects of 18 different compression methods and settings on the subgroup robustness of BERT language models. We show that worst-group performance does not depend on model size alone, but also on the compression method used. Additionally, we find that model compression does not always worsen the performance on minority subgroups. Altogether, our analysis serves to further research into the subgroup robustness of model compression.",
+        "authors": [
+          "Leonidas Gee",
+          "Andrea Zugarini",
+          "Novi Quadrianto"
+        ],
+        "year": 2024,
+        "categories": [
+          "cs.LG",
+          "cs.CL"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2403.17811v1"
+      },
+      {
+        "arxiv_id": "2312.03397",
+        "title": "Generalized Contrastive Divergence: Joint Training of Energy-Based Model and Diffusion Model through Inverse Reinforcement Learning",
+        "abstract": "We present Generalized Contrastive Divergence (GCD), a novel objective function for training an energy-based model (EBM) and a sampler simultaneously. GCD generalizes Contrastive Divergence (Hinton, 2002), a celebrated algorithm for training EBM, by replacing Markov Chain Monte Carlo (MCMC) distribution with a trainable sampler, such as a diffusion model. In GCD, the joint training of EBM and a diffusion model is formulated as a minimax problem, which reaches an equilibrium when both models converge to the data distribution. The minimax learning with GCD bears interesting equivalence to inverse reinforcement learning, where the energy corresponds to a negative reward, the diffusion model is a policy, and the real data is expert demonstrations. We present preliminary yet promising results showing that joint training is beneficial for both EBM and a diffusion model. GCD enables EBM training without MCMC while improving the sample quality of a diffusion model.",
+        "authors": [
+          "Sangwoong Yoon",
+          "Dohyun Kwon",
+          "Himchan Hwang",
+          "Yung-Kyun Noh",
+          "Frank C. Park"
+        ],
+        "year": 2023,
+        "categories": [
+          "cs.LG",
+          "cs.AI"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2312.03397v1"
+      },
+      {
+        "arxiv_id": "2312.05434",
+        "title": "Beneath the Surface: Unveiling Harmful Memes with Multimodal Reasoning Distilled from Large Language Models",
+        "abstract": "The age of social media is rife with memes. Understanding and detecting harmful memes pose a significant challenge due to their implicit meaning that is not explicitly conveyed through the surface text and image. However, existing harmful meme detection approaches only recognize superficial harm-indicative signals in an end-to-end classification manner but ignore in-depth cognition of the meme text and image. In this paper, we attempt to detect harmful memes based on advanced reasoning over the interplay of multimodal information in memes. Inspired by the success of Large Language Models (LLMs) on complex reasoning, we first conduct abductive reasoning with LLMs. Then we propose a novel generative framework to learn reasonable thoughts from LLMs for better multimodal fusion and lightweight fine-tuning, which consists of two training stages: 1) Distill multimodal reasoning knowledge from LLMs; and 2) Fine-tune the generative framework to infer harmfulness. Extensive experiments conducted on three meme datasets demonstrate that our proposed approach achieves superior performance than state-of-the-art methods on the harmful meme detection task.",
+        "authors": [
+          "Hongzhan Lin",
+          "Ziyang Luo",
+          "Jing Ma",
+          "Long Chen"
+        ],
+        "year": 2023,
+        "categories": [
+          "cs.CL"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2312.05434v1"
+      },
+      {
+        "arxiv_id": "2402.15010",
+        "title": "How Important Is Tokenization in French Medical Masked Language Models?",
+        "abstract": "Subword tokenization has become the prevailing standard in the field of natural language processing (NLP) over recent years, primarily due to the widespread utilization of pre-trained language models. This shift began with Byte-Pair Encoding (BPE) and was later followed by the adoption of SentencePiece and WordPiece. While subword tokenization consistently outperforms character and word-level tokenization, the precise factors contributing to its success remain unclear. Key aspects such as the optimal segmentation granularity for diverse tasks and languages, the influence of data sources on tokenizers, and the role of morphological information in Indo-European languages remain insufficiently explored. This is particularly pertinent for biomedical terminology, characterized by specific rules governing morpheme combinations. Despite the agglutinative nature of biomedical terminology, existing language models do not explicitly incorporate this knowledge, leading to inconsistent tokenization strategies for common terms. In this paper, we seek to delve into the complexities of subword tokenization in French biomedical domain across a variety of NLP tasks and pinpoint areas where further enhancements can be made. We analyze classical tokenization algorithms, including BPE and SentencePiece, and introduce an original tokenization strategy that integrates morpheme-enriched word segmentation into existing tokenization methods.",
+        "authors": [
+          "Yanis Labrak",
+          "Adrien Bazoge",
+          "Beatrice Daille",
+          "Mickael Rouvier",
+          "Richard Dufour"
+        ],
+        "year": 2024,
+        "categories": [
+          "cs.CL",
+          "cs.AI",
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2402.15010v2"
+      },
+      {
+        "arxiv_id": "1610.00030",
+        "title": "Modeling Language Change in Historical Corpora: The Case of Portuguese",
+        "abstract": "This paper presents a number of experiments to model changes in a historical Portuguese corpus composed of literary texts for the purpose of temporal text classification. Algorithms were trained to classify texts with respect to their publication date taking into account lexical variation represented as word n-grams, and morphosyntactic variation represented by part-of-speech (POS) distribution. We report results of 99.8% accuracy using word unigram features with a Support Vector Machines classifier to predict the publication date of documents in time intervals of both one century and half a century. A feature analysis is performed to investigate the most informative features for this task and how they are linked to language change.",
+        "authors": [
+          "Marcos Zampieri",
+          "Shervin Malmasi",
+          "Mark Dras"
+        ],
+        "year": 2016,
+        "categories": [
+          "cs.CL"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/1610.00030v1"
+      },
+      {
+        "arxiv_id": "2507.07050",
+        "title": "Discrete Diffusion Models for Language Generation",
+        "abstract": "Diffusion models have emerged as a powerful class of generative models, achieving state-of-the-art results in continuous data domains such as image and video generation. Their core mechanism involves a forward diffusion process that gradually transforms structured data into a Gaussian-like distribution, followed by a learned reverse process to reconstruct the data. While successful in continuous modalities, applying this framework to discrete data-particularly natural language-remains challenging due to token dependency complexities and the lack of a defined generation order.This thesis investigates the feasibility and performance of discrete diffusion models for natural language generation. Specifically, we evaluate the Discrete Denoising Diffusion Probabilistic Model (D3PM) and compare it with traditional autoregressive (AR) language models. To assess generative performance, we use Bits Per Token (BPT), Negative Log-Likelihood (NLL), Perplexity (PPL), and Batch Processing Speed.\n  Results show the best-performing D3PM model achieves a BPT of 5.72, with a mean of 8.05. The AR model outperforms in compression with a lower mean BPT of 4.59, but D3PM achieves higher processing speed, reaching up to 3.97 batches per sec., indicating potential for parallel generation.All evaluations were conducted under consistent conditions-generating 100,000 tokens per model with a fixed batch size of four-for fair comparison. This research presents a detailed analysis of diffusion-based vs. autoregressive models, highlighting trade-offs in generative quality and efficiency. Findings emphasize both the promise and limitations of diffusion models for discrete data, supporting future work in non-autoregressive language generation.",
+        "authors": [
+          "Ashen Weligalle"
+        ],
+        "year": 2025,
+        "categories": [
+          "cs.CL",
+          "cs.LG",
+          "stat.ML"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2507.07050v1"
+      },
+      {
+        "arxiv_id": "2510.03206",
+        "title": "Coevolutionary Continuous Discrete Diffusion: Make Your Diffusion Language Model a Latent Reasoner",
+        "abstract": "Diffusion language models, especially masked discrete diffusion models, have achieved great success recently. While there are some theoretical and primary empirical results showing the advantages of latent reasoning with looped transformers or continuous chain-of-thoughts, continuous diffusion models typically underperform their discrete counterparts. In this paper, we argue that diffusion language models do not necessarily need to be in the discrete space. In particular, we prove that continuous diffusion models have stronger expressivity than discrete diffusions and looped transformers. We attribute the contradiction between the theoretical expressiveness and empirical performance to their practical trainability: while continuous diffusion provides intermediate supervision that looped transformers lack, they introduce additional difficulty decoding tokens into the discrete token space from the continuous representation space. We therefore propose Coevolutionary Continuous Discrete Diffusion (CCDD), which defines a joint multimodal diffusion process on the union of a continuous representation space and a discrete token space, leveraging a single model to simultaneously denoise in the joint space. By combining two modalities, CCDD is expressive with rich semantics in the latent space, as well as good trainability and sample quality with the help of explicit discrete tokens. We also propose effective architectures and advanced training/sampling techniques for CCDD, which reveals strong empirical performance in extensive language modeling experiments on real-world tasks.",
+        "authors": [
+          "Cai Zhou",
+          "Chenxiao Yang",
+          "Yi Hu",
+          "Chenyu Wang",
+          "Chubin Zhang",
+          "Muhan Zhang",
+          "Lester Mackey",
+          "Tommi Jaakkola",
+          "Stephen Bates",
+          "Dinghuai Zhang"
+        ],
+        "year": 2025,
+        "categories": [
+          "cs.AI",
+          "cs.CL"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2510.03206v2"
+      },
+      {
+        "arxiv_id": "2401.08741",
+        "title": "Fixed Point Diffusion Models",
+        "abstract": "We introduce the Fixed Point Diffusion Model (FPDM), a novel approach to image generation that integrates the concept of fixed point solving into the framework of diffusion-based generative modeling. Our approach embeds an implicit fixed point solving layer into the denoising network of a diffusion model, transforming the diffusion process into a sequence of closely-related fixed point problems. Combined with a new stochastic training method, this approach significantly reduces model size, reduces memory usage, and accelerates training. Moreover, it enables the development of two new techniques to improve sampling efficiency: reallocating computation across timesteps and reusing fixed point solutions between timesteps. We conduct extensive experiments with state-of-the-art models on ImageNet, FFHQ, CelebA-HQ, and LSUN-Church, demonstrating substantial improvements in performance and efficiency. Compared to the state-of-the-art DiT model, FPDM contains 87% fewer parameters, consumes 60% less memory during training, and improves image generation quality in situations where sampling computation or time is limited. Our code and pretrained models are available at https://lukemelas.github.io/fixed-point-diffusion-models.",
+        "authors": [
+          "Xingjian Bai",
+          "Luke Melas-Kyriazi"
+        ],
+        "year": 2024,
+        "categories": [
+          "cs.CV",
+          "cs.AI",
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2401.08741v1"
+      }
+    ]
+  },
+  "attention is all you need transformer|25": {
+    "date": "2026-06-24",
+    "results": [
+      {
+        "arxiv_id": "2209.15001",
+        "title": "Dilated Neighborhood Attention Transformer",
+        "abstract": "Transformers are quickly becoming one of the most heavily applied deep learning architectures across modalities, domains, and tasks. In vision, on top of ongoing efforts into plain transformers, hierarchical transformers have also gained significant attention, thanks to their performance and easy integration into existing frameworks. These models typically employ localized attention mechanisms, such as the sliding-window Neighborhood Attention (NA) or Swin Transformer's Shifted Window Self Attention. While effective at reducing self attention's quadratic complexity, local attention weakens two of the most desirable properties of self attention: long range inter-dependency modeling, and global receptive field. In this paper, we introduce Dilated Neighborhood Attention (DiNA), a natural, flexible and efficient extension to NA that can capture more global context and expand receptive fields exponentially at no additional cost. NA's local attention and DiNA's sparse global attention complement each other, and therefore we introduce Dilated Neighborhood Attention Transformer (DiNAT), a new hierarchical vision transformer built upon both. DiNAT variants enjoy significant improvements over strong baselines such as NAT, Swin, and ConvNeXt. Our large model is faster and ahead of its Swin counterpart by 1.6% box AP in COCO object detection, 1.4% mask AP in COCO instance segmentation, and 1.4% mIoU in ADE20K semantic segmentation. Paired with new frameworks, our large variant is the new state of the art panoptic segmentation model on COCO (58.5 PQ) and ADE20K (49.4 PQ), and instance segmentation model on Cityscapes (45.1 AP) and ADE20K (35.4 AP) (no extra data). It also matches the state of the art specialized semantic segmentation models on ADE20K (58.1 mIoU), and ranks second on Cityscapes (84.5 mIoU) (no extra data).",
+        "authors": [
+          "Ali Hassani",
+          "Humphrey Shi"
+        ],
+        "year": 2022,
+        "categories": [
+          "cs.CV",
+          "cs.AI",
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2209.15001v3"
+      },
+      {
+        "arxiv_id": "2105.02723",
+        "title": "Do You Even Need Attention? A Stack of Feed-Forward Layers Does Surprisingly Well on ImageNet",
+        "abstract": "The strong performance of vision transformers on image classification and other vision tasks is often attributed to the design of their multi-head attention layers. However, the extent to which attention is responsible for this strong performance remains unclear. In this short report, we ask: is the attention layer even necessary? Specifically, we replace the attention layer in a vision transformer with a feed-forward layer applied over the patch dimension. The resulting architecture is simply a series of feed-forward layers applied over the patch and feature dimensions in an alternating fashion. In experiments on ImageNet, this architecture performs surprisingly well: a ViT/DeiT-base-sized model obtains 74.9\\% top-1 accuracy, compared to 77.9\\% and 79.9\\% for ViT and DeiT respectively. These results indicate that aspects of vision transformers other than attention, such as the patch embedding, may be more responsible for their strong performance than previously thought. We hope these results prompt the community to spend more time trying to understand why our current models are as effective as they are.",
+        "authors": [
+          "Luke Melas-Kyriazi"
+        ],
+        "year": 2021,
+        "categories": [
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2105.02723v1"
+      },
+      {
+        "arxiv_id": "2605.26355",
+        "title": "Energy-Gated Attention and Wavelet Positional Encoding: Complementary Inductive Biases for Transformer Attention",
+        "abstract": "Standard transformer attention computes pairwise token similarity but treats all tokens as equally salient and all positions as equally local, regardless of the informational structure of the input. We identify two complementary inductive biases that standard attention lacks: energy salience (which tokens concentrate informational energy, learned end-to-end without explicit frequency decomposition) and scale-selective locality (how far positional influence extends at each frequency, implemented via Morlet wavelet encoding). We address both with two simple components. Energy-Gated Attention (EGA) gates value aggregation by a learned energy estimate of key token embeddings, computed via a single linear projection; it selects what to attend to. Morlet Positional Encoding (MoPE) replaces fixed sinusoidal encodings with learned Gaussian-windowed wavelets that adapt the joint position-frequency localization to the corpus; it specifies where attention operates at each scale. On TinyShakespeare, EGA alone achieves +0.092 validation loss improvement over standard attention (+0.103 over Phase 1-3 baseline); MoPE alone is -0.032 (below baseline as a standalone encoding); but their combination achieves +0.119 -- more than the sum of parts. This superadditivity, observed across two independent training runs, is the central empirical finding: salience and locality are complementary inductive biases, each addressing a gap the other cannot fill alone. Ablations confirm that structured spectral priors (Morlet wavelet gates, scale-initialized heads, fixed sinusoidal PE) consistently underperform their unconstrained learned counterparts, while complementary learned components interact superadditively. All experiments are at small scale (<=6M parameters, character-level benchmarks, single seed); larger-scale multi-seed validation is the most important direction for future work.",
+        "authors": [
+          "Athanasios Zeris"
+        ],
+        "year": 2026,
+        "categories": [
+          "cs.LG",
+          "cs.CL",
+          "eess.SP"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2605.26355v1"
+      },
+      {
+        "arxiv_id": "2512.19700",
+        "title": "\"All You Need\" is Not All You Need for a Paper Title: On the Origins of a Scientific Meme",
+        "abstract": "The 2017 paper ''Attention Is All You Need'' introduced the Transformer architecture-and inadvertently spawned one of machine learning's most persistent naming conventions. We analyze 717 arXiv preprints containing ''All You Need'' in their titles (2009-2025), finding exponential growth ($R^2$ > 0.994) following the original paper, with 200 titles in 2025 alone. Among papers following the canonical ''X [Is] All You Need'' structure, ''Attention'' remains the most frequently claimed necessity (28 occurrences). Situating this phenomenon within memetic theory, we argue the pattern's success reflects competitive pressures in scientific communication that increasingly favor memorability over precision. Whether this trend represents harmless academic whimsy or symptomatic sensationalism, we leave-with appropriate self-awareness-to the reader.",
+        "authors": [
+          "Anton Alyakin"
+        ],
+        "year": 2025,
+        "categories": [
+          "cs.CY",
+          "cs.DL"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2512.19700v1"
+      },
+      {
+        "arxiv_id": "2309.01692",
+        "title": "Mask-Attention-Free Transformer for 3D Instance Segmentation",
+        "abstract": "Recently, transformer-based methods have dominated 3D instance segmentation, where mask attention is commonly involved. Specifically, object queries are guided by the initial instance masks in the first cross-attention, and then iteratively refine themselves in a similar manner. However, we observe that the mask-attention pipeline usually leads to slow convergence due to low-recall initial instance masks. Therefore, we abandon the mask attention design and resort to an auxiliary center regression task instead. Through center regression, we effectively overcome the low-recall issue and perform cross-attention by imposing positional prior. To reach this goal, we develop a series of position-aware designs. First, we learn a spatial distribution of 3D locations as the initial position queries. They spread over the 3D space densely, and thus can easily capture the objects in a scene with a high recall. Moreover, we present relative position encoding for the cross-attention and iterative refinement for more accurate position queries. Experiments show that our approach converges 4x faster than existing work, sets a new state of the art on ScanNetv2 3D instance segmentation benchmark, and also demonstrates superior performance across various datasets. Code and models are available at https://github.com/dvlab-research/Mask-Attention-Free-Transformer.",
+        "authors": [
+          "Xin Lai",
+          "Yuhui Yuan",
+          "Ruihang Chu",
+          "Yukang Chen",
+          "Han Hu",
+          "Jiaya Jia"
+        ],
+        "year": 2023,
+        "categories": [
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2309.01692v1"
+      },
+      {
+        "arxiv_id": "1806.11202",
+        "title": "Quit When You Can: Efficient Evaluation of Ensembles with Ordering Optimization",
+        "abstract": "Given a classifier ensemble and a set of examples to be classified, many examples may be confidently and accurately classified after only a subset of the base models in the ensemble are evaluated. This can reduce both mean latency and CPU while maintaining the high accuracy of the original ensemble. To achieve such gains, we propose jointly optimizing a fixed evaluation order of the base models and early-stopping thresholds. Our proposed objective is a combinatorial optimization problem, but we provide a greedy algorithm that achieves a 4-approximation of the optimal solution for certain cases. For those cases, this is also the best achievable polynomial time approximation bound unless $P = NP$. Experiments on benchmark and real-world problems show that the proposed Quit When You Can (QWYC) algorithm can speed-up average evaluation time by $2$x--$4$x, and is around $1.5$x faster than prior work. QWYC's joint optimization of ordering and thresholds also performed better in experiments than various fixed orderings, including gradient boosted trees' ordering.",
+        "authors": [
+          "Serena Wang",
+          "Maya Gupta",
+          "Seungil You"
+        ],
+        "year": 2018,
+        "categories": [
+          "cs.LG",
+          "stat.ML"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/1806.11202v1"
+      },
+      {
+        "arxiv_id": "2103.05236",
+        "title": "GAN Vocoder: Multi-Resolution Discriminator Is All You Need",
+        "abstract": "Several of the latest GAN-based vocoders show remarkable achievements, outperforming autoregressive and flow-based competitors in both qualitative and quantitative measures while synthesizing orders of magnitude faster. In this work, we hypothesize that the common factor underlying their success is the multi-resolution discriminating framework, not the minute details in architecture, loss function, or training strategy. We experimentally test the hypothesis by evaluating six different generators paired with one shared multi-resolution discriminating framework. For all evaluative measures with respect to text-to-speech syntheses and for all perceptual metrics, their performances are not distinguishable from one another, which supports our hypothesis.",
+        "authors": [
+          "Jaeseong You",
+          "Dalhyun Kim",
+          "Gyuhyeon Nam",
+          "Geumbyeol Hwang",
+          "Gyeongsu Chae"
+        ],
+        "year": 2021,
+        "categories": [
+          "cs.SD",
+          "cs.LG",
+          "eess.AS"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2103.05236v2"
+      },
+      {
+        "arxiv_id": "2204.00509",
+        "title": "Relative quantum cohomology under birational transformations",
+        "abstract": "We study how relative quantum cohomology, defined by Tseng--You and Fan--Wu--You, varies under birational transformations. For toric complete intersections with simple normal crossings divisors that contain the loci of indeterminacy, we prove that their respective relative $I$-functions can be directly identified. For toric complete intersections with smooth divisors, we prove that their respective relative $I$-functions are related by analytic continuation. We also study some connections with extremal transitions and FJRW theory.",
+        "authors": [
+          "Fenglong You"
+        ],
+        "year": 2022,
+        "categories": [
+          "math.AG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2204.00509v1"
+      },
+      {
+        "arxiv_id": "2402.04563",
+        "title": "Attention Guided CAM: Visual Explanations of Vision Transformer Guided by Self-Attention",
+        "abstract": "Vision Transformer(ViT) is one of the most widely used models in the computer vision field with its great performance on various tasks. In order to fully utilize the ViT-based architecture in various applications, proper visualization methods with a decent localization performance are necessary, but these methods employed in CNN-based models are still not available in ViT due to its unique structure. In this work, we propose an attention-guided visualization method applied to ViT that provides a high-level semantic explanation for its decision. Our method selectively aggregates the gradients directly propagated from the classification output to each self-attention, collecting the contribution of image features extracted from each location of the input image. These gradients are additionally guided by the normalized self-attention scores, which are the pairwise patch correlation scores. They are used to supplement the gradients on the patch-level context information efficiently detected by the self-attention mechanism. This approach of our method provides elaborate high-level semantic explanations with great localization performance only with the class labels. As a result, our method outperforms the previous leading explainability methods of ViT in the weakly-supervised localization task and presents great capability in capturing the full instances of the target class object. Meanwhile, our method provides a visualization that faithfully explains the model, which is demonstrated in the perturbation comparison test.",
+        "authors": [
+          "Saebom Leem",
+          "Hyunseok Seo"
+        ],
+        "year": 2024,
+        "categories": [
+          "cs.CV",
+          "cs.AI"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2402.04563v1"
+      },
+      {
+        "arxiv_id": "1809.04281",
+        "title": "Music Transformer",
+        "abstract": "Music relies heavily on repetition to build structure and meaning. Self-reference occurs on multiple timescales, from motifs to phrases to reusing of entire sections of music, such as in pieces with ABA structure. The Transformer (Vaswani et al., 2017), a sequence model based on self-attention, has achieved compelling results in many generation tasks that require maintaining long-range coherence. This suggests that self-attention might also be well-suited to modeling music. In musical composition and performance, however, relative timing is critically important. Existing approaches for representing relative positional information in the Transformer modulate attention based on pairwise distance (Shaw et al., 2018). This is impractical for long sequences such as musical compositions since their memory complexity for intermediate relative information is quadratic in the sequence length. We propose an algorithm that reduces their intermediate memory requirement to linear in the sequence length. This enables us to demonstrate that a Transformer with our modified relative attention mechanism can generate minute-long compositions (thousands of steps, four times the length modeled in Oore et al., 2018) with compelling structure, generate continuations that coherently elaborate on a given motif, and in a seq2seq setup generate accompaniments conditioned on melodies. We evaluate the Transformer with our relative attention mechanism on two datasets, JSB Chorales and Piano-e-Competition, and obtain state-of-the-art results on the latter.",
+        "authors": [
+          "Cheng-Zhi Anna Huang",
+          "Ashish Vaswani",
+          "Jakob Uszkoreit",
+          "Noam Shazeer",
+          "Ian Simon",
+          "Curtis Hawthorne",
+          "Andrew M. Dai",
+          "Matthew D. Hoffman",
+          "Monica Dinculescu",
+          "Douglas Eck"
+        ],
+        "year": 2018,
+        "categories": [
+          "cs.LG",
+          "cs.SD",
+          "eess.AS",
+          "stat.ML"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/1809.04281v3"
+      },
+      {
+        "arxiv_id": "2206.03003",
+        "title": "Transformer-based Personalized Attention Mechanism for Medical Images with Clinical Records",
+        "abstract": "In medical image diagnosis, identifying the attention region, i.e., the region of interest for which the diagnosis is made, is an important task. Various methods have been developed to automatically identify target regions from given medical images. However, in actual medical practice, the diagnosis is made based not only on the images but also on a variety of clinical records. This means that pathologists examine medical images with some prior knowledge of the patients and that the attention regions may change depending on the clinical records. In this study, we propose a method called the Personalized Attention Mechanism (PersAM), by which the attention regions in medical images are adaptively changed according to the clinical records. The primary idea of the PersAM method is to encode the relationships between the medical images and clinical records using a variant of Transformer architecture. To demonstrate the effectiveness of the PersAM method, we applied it to a large-scale digital pathology problem of identifying the subtypes of 842 malignant lymphoma patients based on their gigapixel whole slide images and clinical records.",
+        "authors": [
+          "Yusuke Takagi",
+          "Noriaki Hashimoto",
+          "Hiroki Masuda",
+          "Hiroaki Miyoshi",
+          "Koichi Ohshima",
+          "Hidekata Hontani",
+          "Ichiro Takeuchi"
+        ],
+        "year": 2022,
+        "categories": [
+          "eess.IV",
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2206.03003v2"
+      },
+      {
+        "arxiv_id": "2503.02130",
+        "title": "Forgetting Transformer: Softmax Attention with a Forget Gate",
+        "abstract": "An essential component of modern recurrent sequence models is the forget gate. While Transformers do not have an explicit recurrent form, we show that a forget gate can be naturally incorporated into Transformers by down-weighting the unnormalized attention scores in a data-dependent way. We name this attention mechanism Forgetting Attention and the resulting model the Forgetting Transformer (FoX). We show that FoX outperforms the Transformer on long-context language modeling, length extrapolation, and short-context downstream tasks, while performing on par with the Transformer on long-context downstream tasks. Moreover, it is compatible with the FlashAttention algorithm and does not require any positional embeddings. Several analyses, including the needle-in-the-haystack test, show that FoX also retains the Transformer's superior long-context capabilities over recurrent sequence models such as Mamba-2, HGRN2, and DeltaNet. We also introduce a \"Pro\" block design that incorporates some common architectural components in recurrent sequence models and find it significantly improves the performance of both FoX and the Transformer. Our code is available at https://github.com/zhixuan-lin/forgetting-transformer.",
+        "authors": [
+          "Zhixuan Lin",
+          "Evgenii Nikishin",
+          "Xu Owen He",
+          "Aaron Courville"
+        ],
+        "year": 2025,
+        "categories": [
+          "cs.LG",
+          "cs.AI",
+          "cs.CL"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2503.02130v2"
+      },
+      {
+        "arxiv_id": "2112.05993",
+        "title": "Object Counting: You Only Need to Look at One",
+        "abstract": "This paper aims to tackle the challenging task of one-shot object counting. Given an image containing novel, previously unseen category objects, the goal of the task is to count all instances in the desired category with only one supporting bounding box example. To this end, we propose a counting model by which you only need to Look At One instance (LaoNet). First, a feature correlation module combines the Self-Attention and Correlative-Attention modules to learn both inner-relations and inter-relations. It enables the network to be robust to the inconsistency of rotations and sizes among different instances. Second, a Scale Aggregation mechanism is designed to help extract features with different scale information. Compared with existing few-shot counting methods, LaoNet achieves state-of-the-art results while learning with a high convergence speed. The code will be available soon.",
+        "authors": [
+          "Hui Lin",
+          "Xiaopeng Hong",
+          "Yabin Wang"
+        ],
+        "year": 2021,
+        "categories": [
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2112.05993v1"
+      },
+      {
+        "arxiv_id": "2305.11403",
+        "title": "Efficient Mixed Transformer for Single Image Super-Resolution",
+        "abstract": "Recently, Transformer-based methods have achieved impressive results in single image super-resolution (SISR). However, the lack of locality mechanism and high complexity limit their application in the field of super-resolution (SR). To solve these problems, we propose a new method, Efficient Mixed Transformer (EMT) in this study. Specifically, we propose the Mixed Transformer Block (MTB), consisting of multiple consecutive transformer layers, in some of which the Pixel Mixer (PM) is used to replace the Self-Attention (SA). PM can enhance the local knowledge aggregation with pixel shifting operations. At the same time, no additional complexity is introduced as PM has no parameters and floating-point operations. Moreover, we employ striped window for SA (SWSA) to gain an efficient global dependency modelling by utilizing image anisotropy. Experimental results show that EMT outperforms the existing methods on benchmark dataset and achieved state-of-the-art performance. The Code is available at https://github.com/Fried-Rice-Lab/FriedRiceLab.",
+        "authors": [
+          "Ling Zheng",
+          "Jinchen Zhu",
+          "Jinpeng Shi",
+          "Shizhuang Weng"
+        ],
+        "year": 2023,
+        "categories": [
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2305.11403v5"
+      },
+      {
+        "arxiv_id": "2605.25356",
+        "title": "Names Are All You Need: Effective and Safe Regression Test Selection for Python",
+        "abstract": "Regression test selection reduces the cost of regression testing by executing only those tests affected by a code change. Despite extensive study of RTS in statically typed languages, achieving effective and safe RTS in Python is challenging. Python's dynamic typing makes precise call-graph construction difficult, which can cause call-graph-based RTS to miss affected tests. Python's eager importing mechanism, in contrast, renders file-level dependency analysis overly conservative. This paper presents NameRTS, the first Python RTS approach based on fine-grained dependency analysis. NameRTS models a Python program as a bipartite graph of code element nodes and name nodes, with edges capturing definitions and references. RTS is formulated as a reachability problem on this graph: a test is selected if any modified code element is reachable from the names used in that test. This design avoids call-graph construction, enabling a conservative analysis amenable to safety. To control dependency cascades introduced by coarse name matching, NameRTS applies two pruning strategies that leverage prior test executions and context information to refine name matching. To evaluate NameRTS, we construct the first Python RTS dataset with a ground truth indicating which test files are affected by each commit. We compare NameRTS with the best-performing baseline, BabelRTS, an RTS technique based on coarse file-level dependencies. On this benchmark, NameRTS skips 69.90% of test files on average, outperforming BabelRTS by 146.5%. It also reduces end-to-end testing time by 45.59%, yielding a 107.7% improvement over BabelRTS. In terms of safety, NameRTS selects all affected tests for 99.6% of commits, with only rare misses in exceptional cases. In contrast, BabelRTS is safe for 76.6% of commits. These results demonstrate the effectiveness of NameRTS, paving the way for more efficient regression testing in Python.",
+        "authors": [
+          "You Wang",
+          "Michael Pradel",
+          "Zhongxin Liu"
+        ],
+        "year": 2026,
+        "categories": [
+          "cs.SE"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2605.25356v1"
+      },
+      {
+        "arxiv_id": "2406.03470",
+        "title": "SpikeZIP-TF: Conversion is All You Need for Transformer-based SNN",
+        "abstract": "Spiking neural network (SNN) has attracted great attention due to its characteristic of high efficiency and accuracy. Currently, the ANN-to-SNN conversion methods can obtain ANN on-par accuracy SNN with ultra-low latency (8 time-steps) in CNN structure on computer vision (CV) tasks. However, as Transformer-based networks have achieved prevailing precision on both CV and natural language processing (NLP), the Transformer-based SNNs are still encounting the lower accuracy w.r.t the ANN counterparts. In this work, we introduce a novel ANN-to-SNN conversion method called SpikeZIP-TF, where ANN and SNN are exactly equivalent, thus incurring no accuracy degradation. SpikeZIP-TF achieves 83.82% accuracy on CV dataset (ImageNet) and 93.79% accuracy on NLP dataset (SST-2), which are higher than SOTA Transformer-based SNNs. The code is available in GitHub: https://github.com/Intelligent-Computing-Research-Group/SpikeZIP_transformer",
+        "authors": [
+          "Kang You",
+          "Zekai Xu",
+          "Chen Nie",
+          "Zhijie Deng",
+          "Qinghai Guo",
+          "Xiang Wang",
+          "Zhezhi He"
+        ],
+        "year": 2024,
+        "categories": [
+          "cs.NE",
+          "cs.AI"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2406.03470v1"
+      },
+      {
+        "arxiv_id": "2307.13365",
+        "title": "Pay Attention to What You Need",
+        "abstract": "Although large language models (LLMs) have achieved significant success in natural language processing, they still struggle with long-context comprehension. Traditional approaches to mitigating this issue typically rely on fine-tuning or retraining, which is both resource-intensive and challenging to deploy in lightweight industrial settings. In this paper, we investigate the potential to accomplish this without any additional resources. Through an in-depth study of the attention mechanism in LLMs, we propose a method called Scaled ReAttention (SRA) to strengthen LLMs' ability to interpret and retrieve information by strategically manipulating their attention scores during inference. Through extensive experiments, we demonstrate that integrating SRA significantly boosts LLMs' performance on a variety of downstream tasks, highlighting its practical potential for enhancing language understanding without incurring the overhead of traditional training.",
+        "authors": [
+          "Yifei Gao",
+          "Shaohong Chen",
+          "Lei Wang",
+          "Ruiting Dai",
+          "Ziyun Zhang",
+          "Kerui Ren",
+          "Jiaji Wu",
+          "Jun Cheng"
+        ],
+        "year": 2023,
+        "categories": [
+          "cs.CL",
+          "cs.AI"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2307.13365v3"
+      },
+      {
+        "arxiv_id": "2404.05657",
+        "title": "MLP Can Be A Good Transformer Learner",
+        "abstract": "Self-attention mechanism is the key of the Transformer but often criticized for its computation demands. Previous token pruning works motivate their methods from the view of computation redundancy but still need to load the full network and require same memory costs. This paper introduces a novel strategy that simplifies vision transformers and reduces computational load through the selective removal of non-essential attention layers, guided by entropy considerations. We identify that regarding the attention layer in bottom blocks, their subsequent MLP layers, i.e. two feed-forward layers, can elicit the same entropy quantity. Meanwhile, the accompanied MLPs are under-exploited since they exhibit smaller feature entropy compared to those MLPs in the top blocks. Therefore, we propose to integrate the uninformative attention layers into their subsequent counterparts by degenerating them into identical mapping, yielding only MLP in certain transformer blocks. Experimental results on ImageNet-1k show that the proposed method can remove 40% attention layer of DeiT-B, improving throughput and memory bound without performance compromise. Code is available at https://github.com/sihaoevery/lambda_vit.",
+        "authors": [
+          "Sihao Lin",
+          "Pumeng Lyu",
+          "Dongrui Liu",
+          "Tao Tang",
+          "Xiaodan Liang",
+          "Andy Song",
+          "Xiaojun Chang"
+        ],
+        "year": 2024,
+        "categories": [
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2404.05657v1"
+      },
+      {
+        "arxiv_id": "2303.15105",
+        "title": "Vision Transformer with Quadrangle Attention",
+        "abstract": "Window-based attention has become a popular choice in vision transformers due to its superior performance, lower computational complexity, and less memory footprint. However, the design of hand-crafted windows, which is data-agnostic, constrains the flexibility of transformers to adapt to objects of varying sizes, shapes, and orientations. To address this issue, we propose a novel quadrangle attention (QA) method that extends the window-based attention to a general quadrangle formulation. Our method employs an end-to-end learnable quadrangle regression module that predicts a transformation matrix to transform default windows into target quadrangles for token sampling and attention calculation, enabling the network to model various targets with different shapes and orientations and capture rich context information. We integrate QA into plain and hierarchical vision transformers to create a new architecture named QFormer, which offers minor code modifications and negligible extra computational cost. Extensive experiments on public benchmarks demonstrate that QFormer outperforms existing representative vision transformers on various vision tasks, including classification, object detection, semantic segmentation, and pose estimation. The code will be made publicly available at \\href{https://github.com/ViTAE-Transformer/QFormer}{QFormer}.",
+        "authors": [
+          "Qiming Zhang",
+          "Jing Zhang",
+          "Yufei Xu",
+          "Dacheng Tao"
+        ],
+        "year": 2023,
+        "categories": [
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2303.15105v1"
+      },
+      {
+        "arxiv_id": "2606.09951",
+        "title": "Hasse Diagrams for Attention: A Partial Order Framework for Designing Transformer Masks",
+        "abstract": "During the training of large Transformer models, attention masks regulate the scope and direction of information flow across a sequence. Numerous mask variants exist, and operators such as FlexAttention already support arbitrary attention masks. Nevertheless, a systematic formal analysis of the information-flow structure induced by arbitrary masks has been missing. This paper develops a complete theoretical framework. We prove that, with sufficient depth, the information flow of a multi-layer Transformer converges to a Hasse diagram -- a directed acyclic graph representing a partial order. Building on this, we recast the design of parallel training tasks as the problem of finding a minimal common supergraph of Hasse diagrams, and we establish a criterion for the minimal common supergraph. This yields a constructive method to derive attention masks directly from a family of tasks. Applying the framework, we design two novel masks: a block-generation attention mask that ensures training-inference consistency (Block Two-Stream Attention), and a fully supervised bidirectional attention mask (Butterfly Attention). These results demonstrate the framework's capacity to discover new structures.",
+        "authors": [
+          "Chentao Li",
+          "Han Guo"
+        ],
+        "year": 2026,
+        "categories": [
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2606.09951v1"
+      },
+      {
+        "arxiv_id": "2410.05767",
+        "title": "Grounding is All You Need? Dual Temporal Grounding for Video Dialog",
+        "abstract": "In the realm of video dialog response generation, the understanding of video content and the temporal nuances of conversation history are paramount. While a segment of current research leans heavily on large-scale pretrained visual-language models and often overlooks temporal dynamics, another delves deep into spatial-temporal relationships within videos but demands intricate object trajectory pre-extractions and sidelines dialog temporal dynamics. This paper introduces the Dual Temporal Grounding-enhanced Video Dialog model (DTGVD), strategically designed to merge the strengths of both dominant approaches. It emphasizes dual temporal relationships by predicting dialog turn-specific temporal regions, filtering video content accordingly, and grounding responses in both video and dialog contexts. One standout feature of DTGVD is its heightened attention to chronological interplay. By recognizing and acting upon the dependencies between different dialog turns, it captures more nuanced conversational dynamics. To further bolster the alignment between video and dialog temporal dynamics, we've implemented a list-wise contrastive learning strategy. Within this framework, accurately grounded turn-clip pairings are designated as positive samples, while less precise pairings are categorized as negative. This refined classification is then funneled into our holistic end-to-end response generation mechanism. Evaluations using AVSD@DSTC-7 and AVSD@DSTC-8 datasets underscore the superiority of our methodology.",
+        "authors": [
+          "You Qin",
+          "Wei Ji",
+          "Xinze Lan",
+          "Hao Fei",
+          "Xun Yang",
+          "Dan Guo",
+          "Roger Zimmermann",
+          "Lizi Liao"
+        ],
+        "year": 2024,
+        "categories": [
+          "cs.CV",
+          "cs.AI",
+          "cs.MM"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2410.05767v2"
+      },
+      {
+        "arxiv_id": "2411.12502",
+        "title": "Transformer Neural Processes - Kernel Regression",
+        "abstract": "Neural Processes (NPs) are a rapidly evolving class of models designed to directly model the posterior predictive distribution of stochastic processes. Originally developed as a scalable alternative to Gaussian Processes (GPs), which are limited by $O(n^3)$ runtime complexity, the most accurate modern NPs can often rival GPs but still suffer from an $O(n^2)$ bottleneck due to their attention mechanism. We introduce the Transformer Neural Process - Kernel Regression (TNP-KR), a scalable NP featuring: (1) a Kernel Regression Block (KRBlock), a simple, extensible, and parameter efficient transformer block with complexity $O(n_c^2 + n_c n_t)$, where $n_c$ and $n_t$ are the number of context and test points, respectively; (2) a kernel-based attention bias; and (3) two novel attention mechanisms: scan attention (SA), a memory-efficient scan-based attention that when paired with a kernel-based bias can make TNP-KR translation invariant, and deep kernel attention (DKA), a Performer-style attention that implicitly incoporates a distance bias and further reduces complexity to $O(n_c)$. These enhancements enable both TNP-KR variants to perform inference with 100K context points on over 1M test points in under a minute on a single 24GB GPU. On benchmarks spanning meta regression, Bayesian optimization, image completion, and epidemiology, TNP-KR with DKA outperforms its Performer counterpart on nearly every benchmark, while TNP-KR with SA achieves state-of-the-art results.",
+        "authors": [
+          "Daniel Jenson",
+          "Jhonathan Navott",
+          "Mengyan Zhang",
+          "Makkunda Sharma",
+          "Elizaveta Semenova",
+          "Seth Flaxman"
+        ],
+        "year": 2024,
+        "categories": [
+          "cs.LG",
+          "cs.AI",
+          "stat.ML"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2411.12502v4"
+      },
+      {
+        "arxiv_id": "2201.00978",
+        "title": "PyramidTNT: Improved Transformer-in-Transformer Baselines with Pyramid Architecture",
+        "abstract": "Transformer networks have achieved great progress for computer vision tasks. Transformer-in-Transformer (TNT) architecture utilizes inner transformer and outer transformer to extract both local and global representations. In this work, we present new TNT baselines by introducing two advanced designs: 1) pyramid architecture, and 2) convolutional stem. The new \"PyramidTNT\" significantly improves the original TNT by establishing hierarchical representations. PyramidTNT achieves better performances than the previous state-of-the-art vision transformers such as Swin Transformer. We hope this new baseline will be helpful to the further research and application of vision transformer. Code will be available at https://github.com/huawei-noah/CV-Backbones/tree/master/tnt_pytorch.",
+        "authors": [
+          "Kai Han",
+          "Jianyuan Guo",
+          "Yehui Tang",
+          "Yunhe Wang"
+        ],
+        "year": 2022,
+        "categories": [
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2201.00978v1"
+      },
+      {
+        "arxiv_id": "2304.06446",
+        "title": "SpectFormer: Frequency and Attention is what you need in a Vision Transformer",
+        "abstract": "Vision transformers have been applied successfully for image recognition tasks. There have been either multi-headed self-attention based (ViT \\cite{dosovitskiy2020image}, DeIT, \\cite{touvron2021training}) similar to the original work in textual models or more recently based on spectral layers (Fnet\\cite{lee2021fnet}, GFNet\\cite{rao2021global}, AFNO\\cite{guibas2021efficient}). We hypothesize that both spectral and multi-headed attention plays a major role. We investigate this hypothesis through this work and observe that indeed combining spectral and multi-headed attention layers provides a better transformer architecture. We thus propose the novel Spectformer architecture for transformers that combines spectral and multi-headed attention layers. We believe that the resulting representation allows the transformer to capture the feature representation appropriately and it yields improved performance over other transformer representations. For instance, it improves the top-1 accuracy by 2\\% on ImageNet compared to both GFNet-H and LiT. SpectFormer-S reaches 84.25\\% top-1 accuracy on ImageNet-1K (state of the art for small version). Further, Spectformer-L achieves 85.7\\% that is the state of the art for the comparable base version of the transformers. We further ensure that we obtain reasonable results in other scenarios such as transfer learning on standard datasets such as CIFAR-10, CIFAR-100, Oxford-IIIT-flower, and Standford Car datasets. We then investigate its use in downstream tasks such of object detection and instance segmentation on the MS-COCO dataset and observe that Spectformer shows consistent performance that is comparable to the best backbones and can be further optimized and improved. Hence, we believe that combined spectral and attention layers are what are needed for vision transformers.",
+        "authors": [
+          "Badri N. Patro",
+          "Vinay P. Namboodiri",
+          "Vijay Srinivas Agneeswaran"
+        ],
+        "year": 2023,
+        "categories": [
+          "cs.CV",
+          "cs.AI",
+          "cs.CL",
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2304.06446v2"
+      },
+      {
+        "arxiv_id": "2411.09702",
+        "title": "On the Surprising Effectiveness of Attention Transfer for Vision Transformers",
+        "abstract": "Conventional wisdom suggests that pre-training Vision Transformers (ViT) improves downstream performance by learning useful representations. Is this actually true? We investigate this question and find that the features and representations learned during pre-training are not essential. Surprisingly, using only the attention patterns from pre-training (i.e., guiding how information flows between tokens) is sufficient for models to learn high quality features from scratch and achieve comparable downstream performance. We show this by introducing a simple method called attention transfer, where only the attention patterns from a pre-trained teacher ViT are transferred to a student, either by copying or distilling the attention maps. Since attention transfer lets the student learn its own features, ensembling it with a fine-tuned teacher also further improves accuracy on ImageNet. We systematically study various aspects of our findings on the sufficiency of attention maps, including distribution shift settings where they underperform fine-tuning. We hope our exploration provides a better understanding of what pre-training accomplishes and leads to a useful alternative to the standard practice of fine-tuning",
+        "authors": [
+          "Alexander C. Li",
+          "Yuandong Tian",
+          "Beidi Chen",
+          "Deepak Pathak",
+          "Xinlei Chen"
+        ],
+        "year": 2024,
+        "categories": [
+          "cs.LG",
+          "cs.AI",
+          "cs.CV",
+          "cs.NE"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2411.09702v1"
+      }
+    ]
+  }
+}

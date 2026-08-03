@@ -10,6 +10,14 @@ except ImportError:
 
 from .pdf import first_page_spans, full_text
 
+# arXiv's preprint banner ("arXiv:2503.02130v2 [cs.LG] 31 Mar 2025") is often
+# rendered at a LARGER font size than the actual title -- on essentially every
+# arXiv-deposited PDF -- and sits within the top 40% of the page. Left in the
+# candidate pool, it hijacks the title heuristic's max-size calculation and
+# raises the relative-size cutoff high enough to exclude the real title's
+# small-caps body text.
+_ARXIV_BANNER_RE = re.compile(r"^\s*arxiv\s*:\s*\d", re.IGNORECASE)
+
 
 def extract_title(path: Path, text: str, spans: list) -> Tuple[str, bool, Optional[str]]:
     """
@@ -36,7 +44,10 @@ def extract_title(path: Path, text: str, spans: list) -> Tuple[str, bool, Option
         page_height = max((s["bbox"][3] for s in spans if s["bbox"]), default=800)
         top_threshold = page_height * 0.4
 
-        top_spans = [s for s in spans if s["bbox"][1] < top_threshold]
+        top_spans = [
+            s for s in spans
+            if s["bbox"][1] < top_threshold and not _ARXIV_BANNER_RE.match(s["text"])
+        ]
         if top_spans:
             max_size = max((s["size"] for s in top_spans), default=0)
             if max_size > 0:
