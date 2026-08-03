@@ -217,4 +217,40 @@
     border-color: oklch(0.38 0.1589 307.15 / 0.4);
     margin: 1.25rem 0;
   }
+
+  /* GFM tables (remark-gfm). The vault's claim ledgers are tables, so these
+     need to be readable in a narrow panel -- hence the horizontal scroll
+     wrapper rather than letting wide evidence tables blow out the layout. */
+  & .table-scroll {
+    overflow-x: auto;
+    margin-bottom: 1rem;
+  }
+  & table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+  & thead {
+    background: oklch(0.3002 0.1219 305.5 / 0.5);
+  }
+  & th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--color-foreground);
+    padding: 0.5rem 0.7rem;
+    border: 1px solid oklch(0.38 0.1589 307.15 / 0.45);
+    white-space: nowrap;
+  }
+  & td {
+    padding: 0.5rem 0.7rem;
+    border: 1px solid oklch(0.38 0.1589 307.15 / 0.35);
+    vertical-align: top;
+  }
+  & tbody tr:nth-child(even) {
+    background: oklch(0.208 0.0695 304 / 0.4);
+  }
+  & del {
+    color: var(--color-muted-foreground);
+  }
 }

@@ -4,6 +4,7 @@ from backend.config import DB_PATH, HOST, PORT
 from backend import db
 from backend.routes.library import router as library_router
 from backend.routes.explore import router as explore_router
+from backend.routes.vault import router as vault_router
 
 app = FastAPI(title="Clio")
 
@@ -16,6 +17,7 @@ app.add_middleware(
 
 app.include_router(library_router)
 app.include_router(explore_router)
+app.include_router(vault_router)
 
 
 @app.on_event("startup")

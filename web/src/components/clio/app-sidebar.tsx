@@ -1,11 +1,19 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { MessageSquare, Library, Compass, Settings, BookOpenCheck } from "lucide-react";
+import {
+  MessageSquare,
+  Library,
+  Compass,
+  Settings,
+  BookOpenCheck,
+  Network,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { to: "/", label: "Chat", icon: MessageSquare },
   { to: "/library", label: "Library", icon: Library },
   { to: "/explore", label: "Explore", icon: Compass },
+  { to: "/vault", label: "Vault", icon: Network },
 ] as const;
 
 export function AppSidebar() {

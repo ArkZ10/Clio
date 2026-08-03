@@ -12,4 +12,11 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Port 3000 so the browser origin matches the FastAPI backend's CORS
+  // allow_origins (http://localhost:3000) -- keeps the backend untouched.
+  // The plugin defaults to 8080 but only *forces* it under LOVABLE_SANDBOX;
+  // outside the sandbox this config wins.
+  vite: {
+    server: { port: 3000 },
+  },
 });
