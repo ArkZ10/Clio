@@ -31,7 +31,7 @@ const MAX_SPEED = 8;
  *  render (which needs the same number for the initial paint), so it has to
  *  live outside both -- duplicating the formula would let them drift apart. */
 function radiusFor(deg: number, emphasised: boolean): number {
-  return 5 + Math.min(Math.sqrt(deg) * 1.7, 9) + (emphasised ? 2.5 : 0);
+  return 3.5 + Math.min(Math.sqrt(deg) * 1.2, 6) + (emphasised ? 2 : 0);
 }
 
 /** The library's static sample data in the generic shape, so existing callers

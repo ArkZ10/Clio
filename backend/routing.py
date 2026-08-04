@@ -15,10 +15,11 @@ class Stage(str, Enum):
     RERANK = "rerank"
     EXTRACT = "extract"
     SYNTHESIS = "synthesis"
+    CHAT = "chat"
 
 
 DEFAULT_ROUTES: dict[str, str] = {
-    # All four currently route to "deepseek" (direct DeepSeek API,
+    # All five currently route to "deepseek" (direct DeepSeek API,
     # deepseek-v4-flash) -- a user choice. The table is still per-stage: each
     # entry is independent and can be repointed individually; the values just
     # happen to coincide right now. The "nvidia" endpoint stays registered as
@@ -27,6 +28,9 @@ DEFAULT_ROUTES: dict[str, str] = {
     Stage.RERANK.value: "deepseek",
     Stage.EXTRACT.value: "deepseek",
     Stage.SYNTHESIS.value: "deepseek",
+    # Vault chat (V2). Runs BOTH steps of index-first retrieval: page selection
+    # and grounded answering.
+    Stage.CHAT.value: "deepseek",
 }
 
 

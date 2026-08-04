@@ -7,13 +7,14 @@ from backend.routing import resolve_stage, route_name
 
 
 def test_route_name_table_is_correct():
-    # All four currently route to "deepseek" (direct DeepSeek API,
+    # All five currently route to "deepseek" (direct DeepSeek API,
     # deepseek-v4-flash), a user choice. The "nvidia" endpoint remains
     # registered as a fallback.
     assert route_name("cluster_label") == "deepseek"
     assert route_name("rerank") == "deepseek"
     assert route_name("extract") == "deepseek"
     assert route_name("synthesis") == "deepseek"
+    assert route_name("chat") == "deepseek"
 
 
 def test_routing_is_per_stage_not_a_global_constant(monkeypatch):
@@ -24,7 +25,7 @@ def test_routing_is_per_stage_not_a_global_constant(monkeypatch):
     not a single hardcoded global."""
     # Each stage is an independent key.
     assert set(routing.DEFAULT_ROUTES) == {
-        "cluster_label", "rerank", "extract", "synthesis"
+        "cluster_label", "rerank", "extract", "synthesis", "chat"
     }
     # Repoint exactly one entry; only that stage must change.
     monkeypatch.setitem(routing.DEFAULT_ROUTES, "extract", "local-ollama")

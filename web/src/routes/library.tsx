@@ -219,20 +219,19 @@ function LibraryPage() {
               </button>
             </div>
             <div className="min-h-0 flex-1">
+              {/* Chat is vault-grounded everywhere now, so citations are vault
+                  page stems -- which this page has no viewer for. No
+                  onCitationClick is passed, so chips render as plain labels
+                  rather than buttons that go nowhere. Open /vault to read them. */}
               <ChatSurface
-                mode="library"
                 compact
-                emptyTitle="Ask your notes"
-                emptySubtitle="Answers cite the notes they came from."
+                emptyTitle="Ask your wiki"
+                emptySubtitle="Answers cite the wiki pages they came from. Open Vault to read a cited page."
                 suggestions={[
-                  "What links attention and retrieval?",
-                  "Summarise my scaling notes",
-                  "Which notes mention efficiency?",
+                  "What decides output safety in diffusion models?",
+                  "Which claims are contested?",
+                  "What does my wiki say about remasking?",
                 ]}
-                onCitationClick={(id) => {
-                  select(id);
-                  setChatOpen(false);
-                }}
               />
             </div>
           </div>

@@ -29,12 +29,12 @@ function ChatPage() {
       <div className="min-h-0 flex-1">
         <ChatSurface
           suggestions={[
-            "Explain diffusion models simply",
-            "Summarise the Chinchilla scaling result",
-            "Draft a related-work paragraph on RAG",
-            "What should I read after LoRA?",
+            "What decides whether a diffusion model's output is safe?",
+            "What does my wiki say about remasking?",
+            "Which claims are contested?",
+            "What open questions am I tracking?",
           ]}
-          emptySubtitle="Clio is a general-purpose research assistant. Ask a question, or start from a prompt below."
+          emptySubtitle="Answers come only from your wiki. If a topic isn't in there, Clio will say so rather than guess."
         />
       </div>
     </div>

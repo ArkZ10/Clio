@@ -83,19 +83,31 @@ function apiBase(): string {
   return API_URL.replace(/\/$/, "");
 }
 
+/** The backend returns a clear `detail` for 503 (vault not configured), 404,
+ *  and 502 (LLM/selection failure) -- surface it instead of a bare status. */
+async function toError(res: Response, path: string): Promise<Error> {
+  let detail = "";
+  try {
+    detail = ((await res.json()) as { detail?: string }).detail ?? "";
+  } catch {
+    /* non-JSON body: fall through to the status-only message */
+  }
+  return new Error(detail || `Request to ${path} failed (HTTP ${res.status})`);
+}
+
 async function getJson<T>(path: string): Promise<T> {
   const res = await fetch(`${apiBase()}${path}`);
-  if (!res.ok) {
-    // The backend returns a clear `detail` for 503 (vault not configured) and
-    // 404 -- surface it instead of a bare status code.
-    let detail = "";
-    try {
-      detail = ((await res.json()) as { detail?: string }).detail ?? "";
-    } catch {
-      /* non-JSON body: fall through to the status-only message */
-    }
-    throw new Error(detail || `Request to ${path} failed (HTTP ${res.status})`);
-  }
+  if (!res.ok) throw await toError(res, path);
+  return (await res.json()) as T;
+}
+
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${apiBase()}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw await toError(res, path);
   return (await res.json()) as T;
 }
 
@@ -103,3 +115,25 @@ export const fetchVaultGraph = () => getJson<VaultGraph>("/vault/graph");
 
 export const fetchVaultPage = (stem: string) =>
   getJson<VaultPage>(`/vault/page/${encodeURIComponent(stem)}`);
+
+export type ChatTurn = { role: "user" | "assistant"; content: string };
+
+export type VaultChatResponse = {
+  answer: string;
+  /** Page stems the answer was grounded in -- structured server data, not
+   *  regex-scraped from the model's prose. */
+  cited_pages: string[];
+  selected_pages: string[];
+  /** Page names the model invented that don't resolve to a real page. */
+  dropped_count: number;
+  /** True only when page selection came back empty. NOTE: if selection
+   *  over-picked loosely-related pages and the answer then hedges, this is
+   *  still false -- a known V2 limitation, see backend/chat.py. */
+  no_coverage: boolean;
+};
+
+export const postVaultChat = (body: {
+  question: string;
+  page_context?: string | null;
+  history?: ChatTurn[];
+}) => postJson<VaultChatResponse>("/vault/chat", body);

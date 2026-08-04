@@ -1,61 +1,59 @@
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, type UIMessage } from "ai";
-import { ArrowUp, Loader2, Sparkle } from "lucide-react";
+import { ArrowUp, Loader2, Sparkle, FileQuestion } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
-import { noteById } from "@/lib/clio-data";
+import { colorForCategory, postVaultChat, type ChatTurn } from "@/lib/vault";
 
-function messageText(message: UIMessage) {
-  return message.parts
-    .map((part) => (part.type === "text" ? part.text : ""))
-    .join("")
-    .trim();
-}
+/** Turns kept for follow-up questions ("what about the second one?"). Sent to
+ *  the backend, which uses them ONLY for answering -- page selection always
+ *  runs on the current question alone, so history can't bias retrieval. */
+const HISTORY_TURNS = 6;
 
-function citationsFrom(text: string) {
-  const ids = new Set<string>();
-  for (const match of text.matchAll(/\[([a-z0-9-]+)\]/g)) {
-    const id = match[1];
-    if (id && noteById(id)) ids.add(id);
-  }
-  return [...ids];
-}
+type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  /** Assistant only: structured citations from the backend, not scraped prose. */
+  citedPages?: string[];
+  selectedCount?: number;
+  droppedCount?: number;
+  noCoverage?: boolean;
+};
+
+let messageSeq = 0;
+const nextId = () => `m${++messageSeq}`;
 
 export function ChatSurface({
-  mode = "general",
   suggestions,
   emptyTitle = "Ask me anything",
   emptySubtitle,
   onCitationClick,
   compact = false,
+  /** Page stem to always ground this conversation in (the node-click flow). */
+  pageContext = null,
+  /** Resolves a page stem to a display label + category colour, so chips match
+   *  the graph legend. Falls back to the raw stem when absent. */
+  resolvePage,
 }: {
-  mode?: "general" | "library";
   suggestions: string[];
   emptyTitle?: string;
   emptySubtitle?: string;
-  onCitationClick?: (id: string) => void;
+  onCitationClick?: (stem: string) => void;
   compact?: boolean;
+  pageContext?: string | null;
+  resolvePage?: (stem: string) => { title: string; category: string } | undefined;
 }) {
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const { messages, sendMessage, status } = useChat({
-    id: `clio-${mode}`,
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      body: { mode },
-    }),
-    onError: (e) => setError(e.message || "Something went wrong. Please try again."),
-  });
-
-  const busy = status === "submitted" || status === "streaming";
-
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, status]);
+  }, [messages, busy]);
 
   useEffect(() => {
     if (!busy) inputRef.current?.focus();
@@ -66,7 +64,44 @@ export function ChatSurface({
     if (!value || busy) return;
     setError(null);
     setInput("");
-    void sendMessage({ text: value });
+
+    const history: ChatTurn[] = messages
+      .slice(-HISTORY_TURNS)
+      .map((m) => ({ role: m.role, content: m.text }));
+
+    setMessages((prev) => [...prev, { id: nextId(), role: "user", text: value }]);
+    setBusy(true);
+
+    void (async () => {
+      try {
+        const res = await postVaultChat({
+          question: value,
+          page_context: pageContext,
+          history,
+        });
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: nextId(),
+            role: "assistant",
+            text: res.answer,
+            citedPages: res.cited_pages,
+            selectedCount: res.selected_pages.length,
+            droppedCount: res.dropped_count,
+            noCoverage: res.no_coverage,
+          },
+        ]);
+        // Clear on success -- the old implementation left a stale error banner
+        // sitting under later successful answers.
+        setError(null);
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "Something went wrong. Please try again.",
+        );
+      } finally {
+        setBusy(false);
+      }
+    })();
   };
 
   return (
@@ -99,45 +134,95 @@ export function ChatSurface({
           ) : (
             <div className="space-y-6">
               {messages.map((message) => {
-                const text = messageText(message);
                 if (message.role === "user") {
                   return (
                     <div key={message.id} className="flex justify-end">
                       <div className="max-w-[85%] rounded-xl rounded-br-sm bg-primary px-4 py-2.5 text-sm leading-relaxed text-primary-foreground">
-                        {text}
+                        {message.text}
                       </div>
                     </div>
                   );
                 }
-                const citations = mode === "library" ? citationsFrom(text) : [];
+                const cited = message.citedPages ?? [];
                 return (
                   <div key={message.id} className="flex flex-col items-start gap-2">
-                    <div className="max-w-[95%] rounded-xl rounded-bl-sm border border-border bg-surface px-4 py-3">
-                      <div className="prose-clio text-sm">
-                        <ReactMarkdown>{text}</ReactMarkdown>
+                    <div
+                      className={cn(
+                        "max-w-[95%] rounded-xl rounded-bl-sm border px-4 py-3",
+                        // A no-coverage reply must NOT read as a normal answer.
+                        message.noCoverage
+                          ? "border-dashed border-muted-foreground/40 bg-background"
+                          : "border-border bg-surface",
+                      )}
+                    >
+                      {message.noCoverage && (
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                          <FileQuestion className="h-3.5 w-3.5" />
+                          Not in your wiki
+                        </p>
+                      )}
+                      <div
+                        className={cn(
+                          "prose-clio text-sm",
+                          message.noCoverage && "text-muted-foreground",
+                        )}
+                      >
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
                       </div>
                     </div>
-                    {citations.length > 0 && (
+
+                    {cited.length > 0 && (
                       <div className="flex flex-wrap gap-2 pl-1">
-                        {citations.map((id) => (
-                          <button
-                            key={id}
-                            onClick={() => onCitationClick?.(id)}
-                            className="max-w-[240px] truncate rounded-full border border-secondary/60 bg-elevated px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                          >
-                            {noteById(id)?.title ?? id}
-                          </button>
-                        ))}
+                        {cited.map((stem) => {
+                          const page = resolvePage?.(stem);
+                          const dot = page && (
+                            <span
+                              className="inline-block h-2 w-2 shrink-0 rounded-full"
+                              style={{ backgroundColor: colorForCategory(page.category) }}
+                            />
+                          );
+                          const label = <span className="truncate">{page?.title ?? stem}</span>;
+                          const base =
+                            "flex max-w-[240px] items-center gap-1.5 rounded-full border border-secondary/60 bg-elevated px-2.5 py-1 text-xs text-muted-foreground";
+                          // Only a button where there is somewhere to go. On
+                          // pages with no vault viewer the chip still shows what
+                          // grounded the answer, without pretending to be
+                          // clickable.
+                          return onCitationClick ? (
+                            <button
+                              key={stem}
+                              onClick={() => onCitationClick(stem)}
+                              className={cn(base, "transition-colors hover:text-foreground")}
+                            >
+                              {dot}
+                              {label}
+                            </button>
+                          ) : (
+                            <span key={stem} className={base}>
+                              {dot}
+                              {label}
+                            </span>
+                          );
+                        })}
                       </div>
+                    )}
+
+                    {/* Data-honesty line, same spirit as the graph's stats. */}
+                    {message.selectedCount !== undefined && !message.noCoverage && (
+                      <p className="pl-1 font-mono text-[11px] text-muted-foreground/70">
+                        {message.selectedCount} page
+                        {message.selectedCount === 1 ? "" : "s"} used
+                        {message.droppedCount ? ` · ${message.droppedCount} dropped` : ""}
+                      </p>
                     )}
                   </div>
                 );
               })}
 
-              {status === "submitted" && (
+              {busy && (
                 <div className="flex items-center gap-2 pl-1 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Thinking…
+                  Searching your wiki…
                 </div>
               )}
               <div ref={bottomRef} />
@@ -173,7 +258,7 @@ export function ChatSurface({
                 }
               }}
               placeholder={
-                mode === "library" ? "Ask about your saved papers…" : "Message Clio…"
+                pageContext ? `Ask about ${pageContext}…` : "Ask your wiki…"
               }
               className="max-h-40 min-h-9 flex-1 resize-none bg-transparent px-2 py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground/70"
             />
@@ -190,12 +275,12 @@ export function ChatSurface({
               )}
             </button>
           </form>
-          {mode === "library" && (
-            <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Sparkle className="h-3 w-3" />
-              Answers are grounded in your library notes only.
-            </p>
-          )}
+          <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Sparkle className="h-3 w-3" />
+            {pageContext
+              ? `Grounded in your wiki, always including “${pageContext}”.`
+              : "Answers are grounded in your wiki pages only."}
+          </p>
         </div>
       </div>
     </div>
