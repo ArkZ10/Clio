@@ -1,7 +1,6 @@
 # Clio Research Hub
 
-Build a dark-themed research assistant app called Clio. It has three main sections
-
+A dark-themed research assistant app called Clio. It has three main sections
 accessible from a persistent left sidebar.
 
 COLOR PALETTE (use exactly these):
@@ -26,21 +25,20 @@ LAYOUT:
 
 Left sidebar (fixed, ~240px, background #3D155D): Clio logo/wordmark at top, then
 
-three nav items with icons — "Chat", "Library", "Explore". Active item highlighted
+nav items with icons — "Chat", "Library", "Explore", "Vault". Active item highlighted
 
 with #7A29A3. User settings at the bottom.
 
 --- SECTION 1: CHAT ---
 
-A general-purpose LLM chat interface. Centered conversation column (max ~760px).
-
-Message bubbles: user messages right-aligned with #7A29A3 background; assistant
-
-messages left-aligned on #1F0D31 surface. Input bar fixed at bottom with a rounded
-
-#3D155D field, send button in #7A29A3. Empty state: "Ask me anything" with 3-4
-
-suggested prompt chips.
+A research assistant chat, grounded in the Clio backend's vault (see below).
+Centered conversation column (max ~760px). Message bubbles: user messages
+right-aligned with #7A29A3 background; assistant messages left-aligned on
+#1F0D31 surface. Input bar fixed at bottom with a rounded #3D155D field, send
+button in #7A29A3. Empty state: "Ask me anything" with 3-4 suggested prompt
+chips. Answers cite the wiki pages they came from; a question outside the
+wiki's coverage is reported plainly rather than answered from general
+knowledge.
 
 --- SECTION 2: LIBRARY ---
 
@@ -68,13 +66,11 @@ The user's read papers, stored as markdown notes. Two-pane layout:
 
   #0B0B0B canvas.
 
-- Also in Library: a chat panel that can be opened (slide-over from the right, or a
+- Also in Library: a chat panel that can be opened (slide-over from the right) — same
 
-  bottom bar) labeled "Chat with your library" — same chat UI as Section 1, but
+  chat UI as Section 1, grounded in the vault, with citation chips beneath assistant
 
-  with a small badge indicating it's grounded in the user's notes. Include citation
-
-  chips beneath assistant answers linking to the source notes.
+  answers linking to the source pages.
 
 --- SECTION 3: EXPLORE ---
 
@@ -98,25 +94,27 @@ Discover new papers from arXiv. Layout:
 
   clickable chips.
 
+--- SECTION 4: VAULT ---
+
+The Obsidian vault's wikilink graph, read-only, coloured by page category
+(sources/claims/concepts/entities/questions/syntheses/root), with a click-to-read
+detail panel and the same vault-grounded chat as Section 1.
+
 Make it responsive. Prioritize clarity and readability over decoration.
 
-This project was built with [Lovable](https://lovable.dev).
+## Backend
 
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/ede826b1-d75d-4ccb-aacf-c07bac9cefdf).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+This app talks to the Clio FastAPI backend (`../backend`) for the vault graph
+and all chat. See `.env.example` for the required `VITE_API_URL`. The dev
+server runs on port 3000 to match the backend's CORS configuration.
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+You need Node.js (≥20) and npm.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+cd web
+cp .env.example .env   # set VITE_API_URL to your backend, e.g. http://localhost:8000
+npm install
 npm run dev
 ```
