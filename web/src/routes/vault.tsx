@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { AlertTriangle, FileText, MessageSquare, X } from "lucide-react";
@@ -14,6 +14,12 @@ import {
   fetchVaultPage,
   type VaultCategory,
 } from "@/lib/vault";
+import {
+  makeStemResolver,
+  makeWikiLinkRenderer,
+  remarkWikiLinks,
+  wikiAwareUrlTransform,
+} from "@/lib/wiki-links";
 
 /** Frontmatter fields worth surfacing, in display order. The rest (title,
  *  created, sources, ...) are either shown elsewhere or too noisy for a header. */
@@ -107,6 +113,17 @@ function VaultPage() {
   // from selectedStem so browsing to another page mid-conversation doesn't
   // silently change what the running conversation is anchored to.
   const [chatContext, setChatContext] = useState<string | null>(null);
+  const detailScrollRef = useRef<HTMLDivElement>(null);
+
+  // A page swap (graph click, citation chip, or a [[wikilink]] deep in the
+  // article) replaces the article's content in place -- the scroll container
+  // itself doesn't remount, so without this its scroll offset from the
+  // PREVIOUS page carries over. On a shorter or differently laid-out page
+  // that lands you mid-scroll on blank space, which reads as "nothing
+  // happened" even though the new page did load.
+  useEffect(() => {
+    detailScrollRef.current?.scrollTo({ top: 0 });
+  }, [selectedStem]);
 
   const graphQuery = useQuery({
     queryKey: ["vault", "graph"],
@@ -154,6 +171,17 @@ function VaultPage() {
     }
     return map;
   }, [graph]);
+
+  // Resolves a raw [[wikilink]] target (from the page body or a chat answer)
+  // to a real stem, case-insensitively -- see lib/wiki-links.ts.
+  const resolveStem = useMemo(() => makeStemResolver(nodeByStem.keys()), [nodeByStem]);
+
+  // Clicking a resolved wikilink in the page body navigates within this page,
+  // same as clicking a node.
+  const wikiLinkComponent = useMemo(
+    () => makeWikiLinkRenderer(resolveStem, setSelectedStem),
+    [resolveStem],
+  );
 
   const openChat = (context: string | null) => {
     setChatContext(context);
@@ -239,7 +267,10 @@ function VaultPage() {
             </div>
 
             {/* Detail pane */}
-            <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-border bg-surface p-5 lg:w-2/5">
+            <div
+              ref={detailScrollRef}
+              className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-border bg-surface p-5 lg:w-2/5"
+            >
               {!selectedStem && (
                 <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
                   <FileText className="h-5 w-5 text-muted-foreground" />
@@ -302,7 +333,8 @@ function VaultPage() {
 
                   <div className="prose-clio mt-5 text-sm">
                     <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
+                      remarkPlugins={[remarkGfm, remarkWikiLinks]}
+                      urlTransform={wikiAwareUrlTransform}
                       components={{
                         // Wrap tables so a wide evidence table scrolls inside
                         // the panel instead of stretching the whole layout.
@@ -311,6 +343,9 @@ function VaultPage() {
                             <table {...props}>{children}</table>
                           </div>
                         ),
+                        // [[Page]] links -> click to read that page, same as
+                        // clicking its node in the graph.
+                        a: wikiLinkComponent,
                       }}
                     >
                       {pageQuery.data.content}
@@ -371,6 +406,7 @@ function VaultPage() {
                       ]
                 }
                 resolvePage={(stem) => nodeByStem.get(stem)}
+                resolveStem={resolveStem}
                 onCitationClick={(stem) => {
                   setSelectedStem(stem);
                   setChatOpen(false);

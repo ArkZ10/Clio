@@ -1,9 +1,10 @@
 import { ArrowUp, Loader2, Sparkle, FileQuestion } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import { colorForCategory, postVaultChat, type ChatTurn } from "@/lib/vault";
+import { makeWikiLinkRenderer, remarkWikiLinks, wikiAwareUrlTransform } from "@/lib/wiki-links";
 
 /** Turns kept for follow-up questions ("what about the second one?"). Sent to
  *  the backend, which uses them ONLY for answering -- page selection always
@@ -35,6 +36,11 @@ export function ChatSurface({
   /** Resolves a page stem to a display label + category colour, so chips match
    *  the graph legend. Falls back to the raw stem when absent. */
   resolvePage,
+  /** Resolves a raw [[wikilink]] target (the model cites inline, same [[Page]]
+   *  form as citations) to a real stem -- see lib/wiki-links.ts. Absent on
+   *  pages with no vault graph loaded (`/`, `/library`), where inline
+   *  wikilinks in an answer render as plain text instead of a dead link. */
+  resolveStem,
 }: {
   suggestions: string[];
   emptyTitle?: string;
@@ -43,6 +49,7 @@ export function ChatSurface({
   compact?: boolean;
   pageContext?: string | null;
   resolvePage?: (stem: string) => { title: string; category: string } | undefined;
+  resolveStem?: (target: string) => string | null;
 }) {
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +57,13 @@ export function ChatSurface({
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Inline [[wikilinks]] in an answer navigate the same place a citation chip
+  // click does -- both mean "go read that page".
+  const wikiLinkComponent = useMemo(
+    () => makeWikiLinkRenderer(resolveStem, onCitationClick),
+    [resolveStem, onCitationClick],
+  );
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -167,7 +181,13 @@ export function ChatSurface({
                           message.noCoverage && "text-muted-foreground",
                         )}
                       >
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm, remarkWikiLinks]}
+                          urlTransform={wikiAwareUrlTransform}
+                          components={{ a: wikiLinkComponent }}
+                        >
+                          {message.text}
+                        </ReactMarkdown>
                       </div>
                     </div>
 
