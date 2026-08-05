@@ -50,11 +50,15 @@ npm run lint      # eslint
 npm run format    # prettier --write
 ```
 
-Copy `web/.env.example` to `web/.env` and set `LOVABLE_API_KEY` — it is required
-server-side by the `/api/chat` route. Real `.env` files are gitignored.
+Copy `web/.env.example` to `web/.env` and set `VITE_API_URL` (e.g.
+`http://localhost:8000`) to point the UI at the FastAPI backend above. Real
+`.env` files are gitignored.
 
-> **Note:** `web/` is not yet wired to the FastAPI backend; connecting the UI to
-> the backend routes is a separate task.
+`web/` is wired to the backend: the vault graph (`/vault`) reads
+`/vault/graph` + `/vault/page/{stem}`, and chat everywhere (`/`, `/library`,
+`/vault`) is grounded in the vault via `/vault/chat`. Both require
+`CLIO_VAULT_PATH` set in the root `.env` (see `.env.example`) and the backend
+running.
 
 ### Offline pipeline jobs
 
