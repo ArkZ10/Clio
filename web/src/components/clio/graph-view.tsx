@@ -1,7 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { paperNotes } from "@/lib/clio-data";
-
-const CLUSTER_FILL = ["#7A29A3", "#591E82", "#3D155D"];
 
 export type GraphViewNode = { id: string; title: string; color: string };
 export type GraphViewLink = { source: string; target: string };
@@ -34,40 +31,15 @@ function radiusFor(deg: number, emphasised: boolean): number {
   return 3.5 + Math.min(Math.sqrt(deg) * 1.2, 6) + (emphasised ? 2 : 0);
 }
 
-/** The library's static sample data in the generic shape, so existing callers
- *  that pass no data keep working unchanged. */
-function defaultNodes(): GraphViewNode[] {
-  return paperNotes.map((note) => ({
-    id: note.id,
-    title: note.title,
-    color: CLUSTER_FILL[note.cluster % CLUSTER_FILL.length]!,
-  }));
-}
-
-function defaultLinks(): GraphViewLink[] {
-  const seen = new Set<string>();
-  const list: GraphViewLink[] = [];
-  for (const n of paperNotes) {
-    for (const t of n.linked) {
-      const key = [n.id, t].sort().join("|");
-      if (!seen.has(key) && paperNotes.some((p) => p.id === t)) {
-        seen.add(key);
-        list.push({ source: n.id, target: t });
-      }
-    }
-  }
-  return list;
-}
-
 export function GraphView({
-  nodes: nodesProp,
-  links: linksProp,
+  nodes,
+  links,
   onSelect,
   selectedId,
   footerNote,
 }: {
-  nodes?: GraphViewNode[];
-  links?: GraphViewLink[];
+  nodes: GraphViewNode[];
+  links: GraphViewLink[];
   onSelect: (id: string) => void;
   selectedId?: string | null;
   footerNote?: string;
@@ -87,9 +59,6 @@ export function GraphView({
    *  loop moves them by writing attributes directly (see the tick effect),
    *  which is what keeps 60fps from meaning 60 full-tree React re-renders. */
   const [, setSeedVersion] = useState(0);
-
-  const nodes = useMemo(() => nodesProp ?? defaultNodes(), [nodesProp]);
-  const links = useMemo(() => linksProp ?? defaultLinks(), [linksProp]);
 
   const edges = useMemo(() => {
     const ids = new Set(nodes.map((n) => n.id));

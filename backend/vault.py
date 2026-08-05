@@ -204,6 +204,62 @@ def graph_stats(graph: dict) -> dict:
     }
 
 
+def list_sources(vault_path: str | Path) -> list[dict]:
+    """wiki/sources pages that have a real PDF attached via a `raw:` frontmatter
+    field ending in .pdf -- this is the Library feature's paper list.
+
+    Not every page under wiki/sources/ is a paper: 2026-08-03-llm-wiki-idea-file
+    lives there too with `raw:` pointing at a .md scratch file, not a PDF, so it
+    is filtered out rather than shown as a fake library entry. Existence of the
+    PDF file itself is NOT checked here (that's find_source_pdf's job, at fetch
+    time) -- this only reflects what the notes claim to have.
+    """
+    out = []
+    for record in scan_vault(vault_path):
+        if record["category"] != "sources":
+            continue
+        meta, _ = split_frontmatter(record["text"])
+        raw = meta.get("raw")
+        if not isinstance(raw, str) or not raw.lower().endswith(".pdf"):
+            continue
+        authors = meta.get("authors")
+        out.append(
+            {
+                "stem": record["stem"],
+                "title": str(meta.get("title") or record["stem"]),
+                "authors": authors if isinstance(authors, list) else [],
+                "year": meta.get("year") if isinstance(meta.get("year"), int) else None,
+                "venue": meta.get("venue"),
+                "evidence": meta.get("evidence"),
+                "status": meta.get("status"),
+            }
+        )
+    # Newest first; undated entries (shouldn't normally happen) sort last.
+    out.sort(key=lambda p: (p["year"] is None, -(p["year"] or 0), p["title"]))
+    return out
+
+
+def find_source_pdf(vault_path: str | Path, stem: str) -> Path | None:
+    """The PDF a wiki/sources page's `raw:` field points at, or None if the
+    page, the field, or the file doesn't exist.
+
+    `raw:` is vault content (the user's own notes), not request input, but it
+    is still containment-checked the same way find_page checks `stem` -- never
+    trust a path out of a file without verifying where it actually points.
+    """
+    root = Path(vault_path).resolve()
+    page = find_page(root, stem)
+    if page is None or page["category"] != "sources":
+        return None
+    raw = page["meta"].get("raw")
+    if not isinstance(raw, str) or not raw.lower().endswith(".pdf"):
+        return None
+    resolved = (root / raw).resolve()
+    if not resolved.is_relative_to(root) or not resolved.is_file():
+        return None
+    return resolved
+
+
 def find_page(vault_path: str | Path, stem: str) -> dict | None:
     """One in-scope page by filename stem, or None.
 

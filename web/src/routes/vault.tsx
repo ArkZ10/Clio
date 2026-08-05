@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import { AlertTriangle, FileText, MessageSquare, X } from "lucide-react";
 import { GraphView, type GraphViewNode } from "@/components/clio/graph-view";
 import { ChatSurface } from "@/components/clio/chat-surface";
+import { PageMeta } from "@/components/clio/page-meta";
 import {
   CATEGORY_LABEL,
   VAULT_CATEGORIES,
@@ -21,73 +22,18 @@ import {
   wikiAwareUrlTransform,
 } from "@/lib/wiki-links";
 
-/** Frontmatter fields worth surfacing, in display order. The rest (title,
- *  created, sources, ...) are either shown elsewhere or too noisy for a header. */
-const META_FIELDS = [
-  "type",
-  "status",
-  "verdict",
-  "confidence",
-  "evidence",
-  "year",
-  "venue",
-  "design",
-  "n",
-  "replication",
-  "updated",
-] as const;
-
-function metaText(value: unknown): string | null {
-  if (value === null || value === undefined || value === "") return null;
-  if (Array.isArray(value)) {
-    const joined = value.filter(Boolean).join(", ");
-    return joined || null;
-  }
-  if (typeof value === "object") return null;
-  return String(value);
-}
-
-/** Frontmatter as compact chips + tags. Replaces dumping the raw YAML into the
- *  markdown renderer, which produced a wall of bold `key: value` text. */
-function PageMeta({ meta }: { meta: Record<string, unknown> }) {
-  const fields: Array<[string, string]> = [];
-  for (const key of META_FIELDS) {
-    const value = metaText(meta[key]);
-    if (value !== null) fields.push([key, value]);
-  }
-  const tags = Array.isArray(meta["tags"]) ? (meta["tags"] as unknown[]).map(String) : [];
-
-  if (fields.length === 0 && tags.length === 0) return null;
-
-  return (
-    <div className="mt-4 space-y-2 rounded-lg border border-border bg-elevated/40 px-3 py-2.5">
-      {fields.length > 0 && (
-        <dl className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
-          {fields.map(([key, value]) => (
-            <div key={key} className="flex items-baseline gap-1.5">
-              <dt className="text-muted-foreground capitalize">{key}</dt>
-              <dd className="text-foreground">{value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full bg-secondary/50 px-2 py-0.5 text-[11px] text-muted-foreground"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+/** ?page=<stem> -- lets another route (Library's "Read note") link straight
+ *  into a specific page instead of the empty "click a node" state. Anything
+ *  other than a plain string is dropped rather than throwing, since a
+ *  malformed search param should degrade to the normal empty state, not break
+ *  the route. */
+function validateSearch(search: Record<string, unknown>): { page?: string } {
+  const page = search["page"];
+  return typeof page === "string" && page ? { page } : {};
 }
 
 export const Route = createFileRoute("/vault")({
+  validateSearch,
   head: () => ({
     meta: [
       { title: "Vault — Clio wikilink graph" },
@@ -107,7 +53,12 @@ export const Route = createFileRoute("/vault")({
 });
 
 function VaultPage() {
-  const [selectedStem, setSelectedStem] = useState<string | null>(null);
+  // Seeds the initially-open page from ?page=<stem> (Library's "Read note"
+  // link) -- read once on mount, not kept in sync afterwards, so browsing the
+  // graph from there behaves exactly like arriving with no search param at
+  // all.
+  const { page: initialPage } = Route.useSearch();
+  const [selectedStem, setSelectedStem] = useState<string | null>(initialPage ?? null);
   const [chatOpen, setChatOpen] = useState(false);
   // The page the chat is grounded in, captured when chat is opened. Held apart
   // from selectedStem so browsing to another page mid-conversation doesn't

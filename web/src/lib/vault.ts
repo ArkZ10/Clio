@@ -116,6 +116,24 @@ export const fetchVaultGraph = () => getJson<VaultGraph>("/vault/graph");
 export const fetchVaultPage = (stem: string) =>
   getJson<VaultPage>(`/vault/page/${encodeURIComponent(stem)}`);
 
+/** A Library entry: a wiki/sources page that has a real PDF attached. See
+ *  backend/vault.py's list_sources for exactly what counts. */
+export type LibraryPaper = {
+  stem: string;
+  title: string;
+  authors: string[];
+  year: number | null;
+  venue: string | null;
+  evidence: string | null;
+  status: string | null;
+};
+
+export const fetchLibrary = () => getJson<{ papers: LibraryPaper[] }>("/vault/library");
+
+/** Direct link to a source's attached PDF -- meant for a plain `<a href>`
+ *  (opens inline in a new tab), not a fetch() call. */
+export const rawPdfUrl = (stem: string) => `${apiBase()}/vault/raw/${encodeURIComponent(stem)}`;
+
 export type ChatTurn = { role: "user" | "assistant"; content: string };
 
 export type VaultChatResponse = {
