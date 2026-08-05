@@ -22,11 +22,8 @@ import {
   wikiAwareUrlTransform,
 } from "@/lib/wiki-links";
 
-/** ?page=<stem> -- lets another route (Library's "Read note") link straight
- *  into a specific page instead of the empty "click a node" state. Anything
- *  other than a plain string is dropped rather than throwing, since a
- *  malformed search param should degrade to the normal empty state, not break
- *  the route. */
+/** ?page=<stem> -- lets Library's "Read note" link straight into a page.
+ *  Anything malformed just drops to the normal empty state. */
 function validateSearch(search: Record<string, unknown>): { page?: string } {
   const page = search["page"];
   return typeof page === "string" && page ? { page } : {};
@@ -53,25 +50,17 @@ export const Route = createFileRoute("/vault")({
 });
 
 function VaultPage() {
-  // Seeds the initially-open page from ?page=<stem> (Library's "Read note"
-  // link) -- read once on mount, not kept in sync afterwards, so browsing the
-  // graph from there behaves exactly like arriving with no search param at
-  // all.
+  // Seeds the initially-open page from ?page=<stem>, read once on mount.
   const { page: initialPage } = Route.useSearch();
   const [selectedStem, setSelectedStem] = useState<string | null>(initialPage ?? null);
   const [chatOpen, setChatOpen] = useState(false);
-  // The page the chat is grounded in, captured when chat is opened. Held apart
-  // from selectedStem so browsing to another page mid-conversation doesn't
-  // silently change what the running conversation is anchored to.
+  // Captured when chat opens, held apart from selectedStem so browsing to
+  // another page mid-conversation doesn't change what it's anchored to.
   const [chatContext, setChatContext] = useState<string | null>(null);
   const detailScrollRef = useRef<HTMLDivElement>(null);
 
-  // A page swap (graph click, citation chip, or a [[wikilink]] deep in the
-  // article) replaces the article's content in place -- the scroll container
-  // itself doesn't remount, so without this its scroll offset from the
-  // PREVIOUS page carries over. On a shorter or differently laid-out page
-  // that lands you mid-scroll on blank space, which reads as "nothing
-  // happened" even though the new page did load.
+  // The scroll container doesn't remount on a page swap, so its old scroll
+  // offset would otherwise carry over and land you mid-scroll on blank space.
   useEffect(() => {
     detailScrollRef.current?.scrollTo({ top: 0 });
   }, [selectedStem]);
@@ -113,8 +102,7 @@ function VaultPage() {
 
   const stats = graph?.stats;
 
-  // Resolves a cited stem to its title + category so chat chips carry the same
-  // colours as the graph legend.
+  // Resolves a cited stem to title + category for the chat chips.
   const nodeByStem = useMemo(() => {
     const map = new Map<string, { title: string; category: string }>();
     for (const n of graph?.nodes ?? []) {
@@ -123,12 +111,9 @@ function VaultPage() {
     return map;
   }, [graph]);
 
-  // Resolves a raw [[wikilink]] target (from the page body or a chat answer)
-  // to a real stem, case-insensitively -- see lib/wiki-links.ts.
   const resolveStem = useMemo(() => makeStemResolver(nodeByStem.keys()), [nodeByStem]);
 
-  // Clicking a resolved wikilink in the page body navigates within this page,
-  // same as clicking a node.
+  // Clicking a resolved wikilink navigates within this page, same as a node.
   const wikiLinkComponent = useMemo(
     () => makeWikiLinkRenderer(resolveStem, setSelectedStem),
     [resolveStem],
@@ -145,9 +130,7 @@ function VaultPage() {
         <h1 className="text-sm font-medium text-muted-foreground">
           Vault · wikilink graph
         </h1>
-        {/* Stats line: the console-assert equivalent. A data bug (templates
-            leaking in, links silently dropped) shows up here even if the
-            render looks fine. */}
+        {/* Stats line doubles as a sanity check for data bugs. */}
         <div className="flex items-center gap-3">
           {stats && (
             <p className="font-mono text-xs text-muted-foreground">
@@ -255,8 +238,7 @@ function VaultPage() {
                       </span>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      {/* Node click -> chat. GraphView's onSelect only yields
-                          a stem, so this lives here rather than in the graph. */}
+                      {/* Lives here, not in GraphView -- onSelect only yields a stem. */}
                       <button
                         onClick={() => openChat(selectedStem)}
                         className="flex items-center gap-1.5 rounded-lg border border-border bg-elevated px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
@@ -287,15 +269,13 @@ function VaultPage() {
                       remarkPlugins={[remarkGfm, remarkWikiLinks]}
                       urlTransform={wikiAwareUrlTransform}
                       components={{
-                        // Wrap tables so a wide evidence table scrolls inside
-                        // the panel instead of stretching the whole layout.
+                        // Wide evidence tables scroll inside the panel instead
+                        // of stretching the layout.
                         table: ({ children, ...props }) => (
                           <div className="table-scroll">
                             <table {...props}>{children}</table>
                           </div>
                         ),
-                        // [[Page]] links -> click to read that page, same as
-                        // clicking its node in the graph.
                         a: wikiLinkComponent,
                       }}
                     >
@@ -336,9 +316,7 @@ function VaultPage() {
             </div>
             <div className="min-h-0 flex-1">
               <ChatSurface
-                // Remount on context change so a page-anchored conversation
-                // starts clean rather than inheriting the previous page's turns.
-                key={chatContext ?? "__all__"}
+                surface="vault"
                 compact
                 pageContext={chatContext}
                 emptyTitle={chatContext ? "Ask about this page" : "Ask your wiki"}

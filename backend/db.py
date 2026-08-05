@@ -109,6 +109,40 @@ def init_db(db_path):
         )
     """)
 
+    # Vault-chat conversations (backend/chat_store.py). surface is which page
+    # owns the thread ("home" / "library" / "vault"); page_context is the page
+    # stem for an "Ask about this page" thread, NULL for the general one.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS chat_session (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            surface TEXT NOT NULL,
+            page_context TEXT,
+            title TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_chat_session_surface ON chat_session(surface)"
+    )
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS chat_message (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            cited_pages TEXT,
+            selected_pages TEXT,
+            dropped_count INTEGER,
+            no_coverage INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_chat_message_session ON chat_message(session_id)"
+    )
+
     db.commit()
     db.close()
 

@@ -1,11 +1,7 @@
 /**
  * Client for the read-only vault endpoints, plus the category colour scale.
- *
- * The app had no categorical palette before this (only three cycling purples in
- * graph-view), so these seven hues are new. They are held at similar lightness
- * and saturation so they still read as the Clio dark theme rather than a
- * rainbow, while staying distinguishable at 10px node size -- telling a claim
- * from a source at a glance is the whole point of colouring by category.
+ * Hues are held at similar lightness/saturation to stay on-theme rather than
+ * a rainbow, while still being distinguishable at small node sizes.
  */
 
 export const VAULT_CATEGORIES = [
@@ -69,9 +65,8 @@ export type VaultPage = {
   meta: Record<string, unknown>;
 };
 
-/** Base URL of the FastAPI backend. Never hardcoded -- set VITE_API_URL in
- *  web/.env (see web/.env.example). Missing config fails loudly below rather
- *  than silently fetching "undefined/vault/graph". */
+/** Base URL of the FastAPI backend -- set VITE_API_URL in web/.env. Missing
+ *  config fails loudly below rather than fetching "undefined/vault/graph". */
 const API_URL = import.meta.env.VITE_API_URL;
 
 function apiBase(): string {
@@ -83,8 +78,7 @@ function apiBase(): string {
   return API_URL.replace(/\/$/, "");
 }
 
-/** The backend returns a clear `detail` for 503 (vault not configured), 404,
- *  and 502 (LLM/selection failure) -- surface it instead of a bare status. */
+/** Surfaces the backend's `detail` message instead of a bare status code. */
 async function toError(res: Response, path: string): Promise<Error> {
   let detail = "";
   try {
@@ -111,13 +105,18 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
   return (await res.json()) as T;
 }
 
+async function deleteJson<T>(path: string): Promise<T> {
+  const res = await fetch(`${apiBase()}${path}`, { method: "DELETE" });
+  if (!res.ok) throw await toError(res, path);
+  return (await res.json()) as T;
+}
+
 export const fetchVaultGraph = () => getJson<VaultGraph>("/vault/graph");
 
 export const fetchVaultPage = (stem: string) =>
   getJson<VaultPage>(`/vault/page/${encodeURIComponent(stem)}`);
 
-/** A Library entry: a wiki/sources page that has a real PDF attached. See
- *  backend/vault.py's list_sources for exactly what counts. */
+/** A Library entry -- see backend/vault.py's list_sources. */
 export type LibraryPaper = {
   stem: string;
   title: string;
@@ -130,24 +129,20 @@ export type LibraryPaper = {
 
 export const fetchLibrary = () => getJson<{ papers: LibraryPaper[] }>("/vault/library");
 
-/** Direct link to a source's attached PDF -- meant for a plain `<a href>`
- *  (opens inline in a new tab), not a fetch() call. */
+/** Direct link to a source's PDF -- for a plain `<a href>`, not fetch(). */
 export const rawPdfUrl = (stem: string) => `${apiBase()}/vault/raw/${encodeURIComponent(stem)}`;
 
 export type ChatTurn = { role: "user" | "assistant"; content: string };
 
 export type VaultChatResponse = {
   answer: string;
-  /** Page stems the answer was grounded in -- structured server data, not
-   *  regex-scraped from the model's prose. */
+  /** Page stems the answer was grounded in -- structured, not scraped. */
   cited_pages: string[];
   selected_pages: string[];
   /** Page names the model invented that don't resolve to a real page. */
   dropped_count: number;
-  /** True when the wiki doesn't cover the question -- either page selection
-   *  came back empty, or the model was given pages but judged (via its own
-   *  COVERAGE: YES/NO signal) that they don't actually answer it. See
-   *  backend/chat.py's answer(). */
+  /** True when the wiki doesn't cover the question. See backend/chat.py's
+   *  answer(). */
   no_coverage: boolean;
 };
 
@@ -155,4 +150,48 @@ export const postVaultChat = (body: {
   question: string;
   page_context?: string | null;
   history?: ChatTurn[];
+  session_id?: number | null;
 }) => postJson<VaultChatResponse>("/vault/chat", body);
+
+/** Which page's chat this is -- each surface keeps its own thread. */
+export type ChatSurfaceName = "home" | "library" | "vault";
+
+export type ChatSessionSummary = {
+  id: number;
+  page_context: string | null;
+  title: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ChatSessionMessage = {
+  role: "user" | "assistant";
+  content: string;
+  cited_pages: string[];
+  selected_pages: string[];
+  dropped_count: number | null;
+  no_coverage: boolean | null;
+  created_at: string;
+};
+
+export type ChatSessionDetail = ChatSessionSummary & {
+  surface: ChatSurfaceName;
+  messages: ChatSessionMessage[];
+};
+
+export const fetchChatSessions = (surface: ChatSurfaceName) =>
+  getJson<{ sessions: ChatSessionSummary[] }>(
+    `/vault/chat/sessions?surface=${encodeURIComponent(surface)}`,
+  );
+
+export const fetchChatSession = (id: number) =>
+  getJson<ChatSessionDetail>(`/vault/chat/sessions/${id}`);
+
+export const createChatSession = (surface: ChatSurfaceName, pageContext: string | null) =>
+  postJson<{ id: number }>("/vault/chat/sessions", {
+    surface,
+    page_context: pageContext,
+  });
+
+export const deleteChatSession = (id: number) =>
+  deleteJson<{ ok: boolean }>(`/vault/chat/sessions/${id}`);

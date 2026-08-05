@@ -52,32 +52,19 @@ DEFAULT_MAX_LONE_BUFFER = 2000
 
 
 class ThinkStreamFilter:
-    """Stateful filter that separates inline <think>...</think> reasoning from
-    visible text across stream chunk boundaries (a per-chunk regex can't see a
-    tag that's split across two deltas).
+    """Separates inline <think>...</think> reasoning from visible text across
+    stream chunk boundaries (a per-chunk regex can't see a tag split across
+    two deltas). Also handles a lone "</think>" with no opener -- some chat
+    templates (Qwen3 via Ollama) pre-seed the opener in the prompt, so only
+    the closer reaches the API.
 
-    Also handles a lone "</think>" with no opening tag the same way non-stream
-    already does (payloads.strip_think): some chat templates (Qwen3 via Ollama)
-    pre-seed the opener in the prompt, so only the closing tag reaches the API.
-
-    Two buffers, two different jobs:
-    - `buffer` is the tiny (<=8 char) marker-boundary scratch space -- always
-      held back for at most one marker's length, regardless of state, so a tag
-      split across a chunk can still be detected. Resolved text not part of an
-      unfinished marker is emitted (or routed to thinking) the same feed() call.
-    - `pending` exists only BEFORE the first marker (of either kind) has ever
-      been seen. Until then, text can't be classified yet -- a lone "</think>"
-      later would retroactively make it reasoning, and it's too late to un-emit
-      an already-yielded visible chunk -- so it's held rather than emitted.
-      Once a marker resolves the ambiguity (explicit opener -> pending was real
-      preamble; lone closer -> pending was leaked reasoning), `pending` is
-      cleared and normal immediate per-chunk emission applies for the rest of
-      the stream. If `pending` grows past `max_lone_buffer` with no marker at
-      all, it's released as visible -- a long tagless response is real answer
-      text, not reasoning waiting on a closer that isn't coming. This bounds
-      the worst-case latency for non-thinking models to `max_lone_buffer`
-      characters instead of the entire response, at the cost of the lone-closer
-      guarantee for reasoning longer than that cap (accepted trade-off).
+    `buffer` holds back the last <=8 chars in case they're a split marker.
+    `pending` holds text before the first marker is ever seen, since a later
+    lone "</think>" would retroactively make it reasoning and an already-
+    emitted visible chunk can't be un-emitted. Once a marker resolves that
+    ambiguity, `pending` clears and emission is immediate from then on. If
+    `pending` outgrows `max_lone_buffer` with no marker at all, it's released
+    as visible -- caps worst-case latency for non-thinking models.
     """
 
     _OPEN = "<think>"
@@ -86,9 +73,9 @@ class ThinkStreamFilter:
     def __init__(self, max_lone_buffer: int = DEFAULT_MAX_LONE_BUFFER):
         self.in_think = False
         self.buffer = ""
-        self.resolved = False  # has any marker (open or close) been seen yet?
-        self.pending = ""      # text held until the first marker resolves it,
-        self.max_lone_buffer = max_lone_buffer  # or the cap forces resolution
+        self.resolved = False  # has any marker been seen yet?
+        self.pending = ""
+        self.max_lone_buffer = max_lone_buffer
 
     def feed(self, text: str) -> tuple[str, str]:
         self.buffer += text
@@ -158,9 +145,8 @@ class ThinkStreamFilter:
         return 0
 
     def flush(self) -> str:
-        """End of stream. A held-back partial that never completed into a real
-        tag, and any still-pending preamble that never got a marker at all
-        (this model just doesn't use think tags), are both ordinary text."""
+        """End of stream -- any leftover partial or pending text is ordinary
+        text (a model that never used think tags at all)."""
         remaining = self.pending + self.buffer
         self.pending = ""
         self.buffer = ""
@@ -256,20 +242,11 @@ async def stream(
     session_id: Optional[str] = None,  # no-op passthrough for now
     timeout: float = 300,
 ) -> AsyncIterator[dict]:
-    """Inline <think>...</think> reasoning (or a lone Qwen3-style "</think>"
-    with no opener) is filtered out of visible deltas via ThinkStreamFilter,
-    which buffers across chunk boundaries so a split tag can't leak through.
-    Events already tagged thinking (openai reasoning_content, ollama thinking
-    field) bypass the filter -- it only applies to inline tags in content.
-
-    TRADE-OFF: until the filter sees a marker, it can't yet tell whether
-    reasoning text is coming, so it holds inline content rather than emitting
-    it -- but only up to DEFAULT_MAX_LONE_BUFFER (2000) characters, not the
-    whole response. A model that never emits think tags shows its first
-    visible delta once that cap is reached (or at stream end if the response
-    is shorter), then streams normally -- see ThinkStreamFilter's docstring.
-    This only affects providers whose reasoning is inline in content (Ollama);
-    OpenAI/Anthropic tag reasoning separately and are unaffected."""
+    """Inline <think>...</think> reasoning is filtered out of visible deltas
+    via ThinkStreamFilter, which buffers across chunk boundaries. Events
+    already tagged thinking (openai reasoning_content, ollama thinking field)
+    bypass the filter -- only affects providers with reasoning inline in
+    content (Ollama), not OpenAI/Anthropic."""
     provider, url, hdrs, body = _prepare(
         endpoint_name, model, temperature, max_tokens, tools, thinking, messages
     )

@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
-"""Generate a dbgate-friendly copy of the database.
+"""Generates a dbgate-friendly copy of the database. dbgate (and any SQLite
+client without the sqlite-vec extension) can't open a database with vec0
+virtual tables -- this produces a browse-only copy with those removed.
 
-dbgate (and any SQLite client without the sqlite-vec extension) cannot open a
-database that contains vec0 virtual tables -- it aborts schema introspection with
-"no such module: vec0". This script produces a browse-only copy with those virtual
-tables removed, so dbgate can open it and show the `paper` table cleanly.
-
-The copy is a SNAPSHOT. Re-run this after new ingests to refresh it.
+The copy is a snapshot; re-run after new ingests to refresh it.
 Point dbgate at: data/clio_browse.db
 """
 import shutil

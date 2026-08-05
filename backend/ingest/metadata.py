@@ -10,12 +10,8 @@ except ImportError:
 
 from .pdf import first_page_spans, full_text
 
-# arXiv's preprint banner ("arXiv:2503.02130v2 [cs.LG] 31 Mar 2025") is often
-# rendered at a LARGER font size than the actual title -- on essentially every
-# arXiv-deposited PDF -- and sits within the top 40% of the page. Left in the
-# candidate pool, it hijacks the title heuristic's max-size calculation and
-# raises the relative-size cutoff high enough to exclude the real title's
-# small-caps body text.
+# arXiv's preprint banner often renders larger than the actual title, which
+# would hijack the max-size calculation below if left in the candidate pool.
 _ARXIV_BANNER_RE = re.compile(r"^\s*arxiv\s*:\s*\d", re.IGNORECASE)
 
 
@@ -51,18 +47,12 @@ def extract_title(path: Path, text: str, spans: list) -> Tuple[str, bool, Option
         if top_spans:
             max_size = max((s["size"] for s in top_spans), default=0)
             if max_size > 0:
-                # Use a relative threshold, not an absolute 1pt tolerance: titles
-                # are sometimes set in small caps, where the first letter of each
-                # word is a larger drop cap and the rest of the word is smaller.
-                # Both belong to the title visually even though they differ >1pt.
+                # Relative threshold, not 1pt tolerance -- small-caps titles mix
+                # a larger drop cap with smaller body letters in the same word.
                 title_spans = [s for s in top_spans if s["size"] >= max_size * 0.75]
                 if title_spans:
-                    # Reconstruct line breaks from y-position jumps: spans on the
-                    # same physical line can still differ in baseline by a couple
-                    # of points (drop cap vs. small-caps body), but a real line
-                    # break jumps much further. Concatenate within a line (spans
-                    # already carry their own internal spacing), join lines with
-                    # a single space.
+                    # A real line break jumps much further in y than baseline
+                    # noise within one line does.
                     lines = []
                     current_line = []
                     last_y0 = None

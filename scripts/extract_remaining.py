@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Extract every paper that still needs it: the 2 'failed' library rows (re-run
-at the raised 250k gate -> should flip to ok) + all explore papers with PDFs
-(first-time extraction). Serial, fail-soft, idempotent. Reuses run_extract.py's
-proven extract_and_persist AS-IS (now at MAX_INPUT_CHARS=250000).
+"""Extracts every paper that still needs it: the 'failed' library rows (re-run
+at the raised 250k gate) plus all explore papers with PDFs. Serial, fail-soft,
+idempotent. Reuses run_extract.py's extract_and_persist as-is.
 """
 import asyncio
 import sys

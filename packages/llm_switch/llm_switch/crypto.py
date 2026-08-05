@@ -1,11 +1,8 @@
 """Fernet-based symmetric encryption for secrets in the endpoint registry.
+Ported from Odysseus' src/secret_storage.py, self-contained, keyed at
+~/.llm_switch/.key.
 
-Ported from Odysseus' src/secret_storage.py, made self-contained (no Odysseus
-imports) and pointed at ~/.llm_switch/.key instead of data/.app_key.
-
-Encrypted values carry an "enc:" prefix so encrypt()/decrypt() are idempotent:
-re-encrypting an already-encrypted value is a no-op, and decrypting a
-plaintext value returns it unchanged.
+Encrypted values carry an "enc:" prefix so encrypt()/decrypt() are idempotent.
 """
 import os
 from pathlib import Path

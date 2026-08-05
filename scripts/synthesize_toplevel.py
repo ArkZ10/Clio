@@ -1,24 +1,21 @@
 #!/usr/bin/env python3
-"""F4b: TOP-LEVEL synthesis over the per-cluster (F4a) syntheses, plus
-small-cluster folding and the noise/scattered section. READ-ONLY -- writes
-NOTHING (persistence is F4c). Synthesis routes to DeepSeek via the existing
-routing.py table (stage='synthesis' -> 'deepseek'); no overrides.
+"""Top-level synthesis over the per-cluster syntheses, plus small-cluster
+folding and the noise/scattered section. Read-only, writes nothing
+(persistence is a separate step). Routes to deepseek via routing.py.
 
-The two-tier grounding must survive one level up: top-level claims cite
-cluster_ids and may ONLY assert relations that decompose into claims already
-present in the per-cluster (F4a) syntheses. This module reuses F4a's per-cluster
-synthesis pipeline (synthesize_clusters.py) so the F4a call pattern/retry logic
-isn't duplicated; the top-level call itself is new (Step 1 below).
+Two-tier grounding must survive one level up: top-level claims cite
+cluster_ids and may only assert relations that decompose into claims already
+present in the per-cluster syntheses. Reuses the per-cluster pipeline
+(synthesize_clusters.py) rather than duplicating its call/retry logic; the
+top-level call itself is new.
 
 Pipeline:
-  Step 0  re-run the 3 per-cluster (F4a) syntheses in-memory; fold clusters with
-          usable size < 3 into the scattered set; qualifying camps = size >= 3.
-  Step 1  one DeepSeek call over ONLY the qualifying camps' syntheses (no raw
-          paper fields).
-  Step 2  verification: VALID-CLUSTER-IDS, ARITY, DECOMPOSITION view (surfaced
-          for human eyeball, not auto-judged) + UNSUPPORTED-SUSPECT hard check,
-          COVERAGE.
-  Step 3  readout + TOP-LEVEL GROUNDING line.
+  1. re-run the per-cluster syntheses in-memory; fold clusters with usable
+     size < 3 into the scattered set, qualifying camps = size >= 3
+  2. one call over only the qualifying camps' syntheses (no raw paper fields)
+  3. verification: valid cluster ids, arity, a decomposition view for human
+     eyeball (not auto-judged), an unsupported-claim hard check, coverage
+  4. readout + grounding line
 """
 import asyncio
 import json

@@ -92,9 +92,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      // SVG is the primary icon (crisp at any size, renders the purple
-      // gradient); favicon.ico is the legacy raster fallback for browsers
-      // that don't support SVG favicons.
+      // favicon.ico is the raster fallback for browsers without SVG favicon support.
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "icon", href: "/favicon.ico", sizes: "any" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },

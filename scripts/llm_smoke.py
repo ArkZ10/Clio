@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""Live smoke test for llm_switch's call() and stream(), against real endpoints.
-
-Loads Clio/.env itself (llm_switch the package never touches dotenv -- this is
-an application-level script, not part of the package) so DEEPSEEK_API_KEY is
-available regardless of the calling shell's environment.
+"""Live smoke test for llm_switch's call() and stream(), against real
+endpoints. Loads Clio/.env itself (llm_switch never touches dotenv) so
+DEEPSEEK_API_KEY is available regardless of the calling shell's environment.
 """
 import asyncio
 import os

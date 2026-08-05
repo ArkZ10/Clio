@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-"""F1: fetch PDFs for explore papers from arXiv, persist them, measure text length.
-
-arxiv 4.0.0 dropped Result.download_pdf, so we reuse arxiv's Client/Search ONLY
-to resolve each paper's authoritative pdf_url (the existing v3 access pattern),
-then HTTP-GET that url with httpx. NO extraction, NO LLM, NO chunking here -- this
-just fetches, persists pdf_path, and measures len(markdown) per paper.
+"""Fetches PDFs for explore papers from arXiv, persists them, measures text
+length. arxiv 4.0.0 dropped Result.download_pdf, so this uses arxiv's
+Client/Search only to resolve each pdf_url, then HTTP-GETs it with httpx. No
+extraction, no LLM, no chunking -- just fetch, persist pdf_path, measure length.
 """
 import statistics
 import sys

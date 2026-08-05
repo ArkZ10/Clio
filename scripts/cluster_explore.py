@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""Cluster the source='explore' papers with the EXACT v1 method + params
-(HDBSCAN min_cluster_size=2 via backend.graph.cluster.cluster_papers), over the
-EXPLORE set ONLY -- library vectors are not loaded into this pass.
+"""Clusters the source='explore' papers with the same method as library
+(HDBSCAN min_cluster_size=2 via backend.graph.cluster.cluster_papers) -- the
+explore set only, library vectors aren't loaded.
 
-Assignments are stored the same way v1 stores them (cluster + paper_cluster),
-but tagged with a non-NULL exploration_id sentinel so they stay separable from
-library clusters (which use exploration_id IS NULL). Idempotent: re-running
-clears the prior explore clusters first. -1 = HDBSCAN noise (reported, not
-forced into a cluster).
+Stored the same way as library (cluster + paper_cluster), tagged with a
+non-NULL exploration_id so they stay separable from library's (NULL) clusters.
+Idempotent: re-running clears the prior explore clusters first. -1 = HDBSCAN
+noise, reported not forced into a cluster.
 """
 import sys
 from pathlib import Path

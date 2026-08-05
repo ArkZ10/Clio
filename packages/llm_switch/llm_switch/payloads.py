@@ -1,25 +1,20 @@
-"""Pure request/response transformation logic. No HTTP, no network.
-
-A3 (client.py / call() / stream()) calls these functions around its HTTP layer.
-Keeping them pure here means the openai/ollama/anthropic wire-format differences
-are testable with canned dicts, with no live endpoint required.
+"""Pure request/response transformation logic. No HTTP, no network -- keeps
+the openai/ollama/anthropic wire-format differences testable with canned
+dicts, no live endpoint required. client.py's call()/stream() wrap these.
 """
 import re
 from typing import Any, Optional
 
 _THINK_RE = re.compile(r"<think>(.*?)</think>", re.DOTALL)
-# Some chat templates (e.g. Qwen3 via Ollama) pre-seed the opening <think> tag
-# in the prompt itself, so only the model-generated closing tag reaches the
-# API response -- the leading text up to that lone "</think>" is reasoning
-# that leaked into content, not part of the answer.
+# Some chat templates (Qwen3 via Ollama) pre-seed the opening <think> tag in
+# the prompt, so only the closing tag reaches the API response.
 _LONE_CLOSE_THINK_RE = re.compile(r"\A(.*?)</think>\s*", re.DOTALL)
 
 
 def sanitize_messages(messages: list[dict]) -> list[dict]:
-    """Strip reasoning_content/thinking keys from every message before sending
-    upstream. Never echo a model's prior reasoning back to it -- DeepSeek 400s
-    on it, and it degrades quality generally. Returns a new list; does not
-    mutate the input."""
+    """Strips reasoning_content/thinking keys before sending upstream --
+    DeepSeek 400s on echoed reasoning, and it degrades quality generally.
+    Returns a new list, doesn't mutate the input."""
     cleaned = []
     for m in messages:
         c = dict(m)
@@ -30,14 +25,10 @@ def sanitize_messages(messages: list[dict]) -> list[dict]:
 
 
 def strip_think(text: str) -> tuple[str, str]:
-    """Remove <think>...</think> spans from text. Returns (clean_text,
-    extracted_reasoning) -- the concatenated removed spans, in order. Handles a
-    model emitting think tags even when thinking wasn't explicitly requested;
-    think content must never remain in clean_text.
-
-    Also handles a lone leading "</think>" with no opening tag (some chat
-    templates pre-seed the opener in the prompt, so it never reaches the API
-    response) -- everything before that closing tag is reasoning too."""
+    """Removes <think>...</think> spans. Returns (clean_text, reasoning) --
+    the concatenated removed spans, in order. Also handles a lone leading
+    "</think>" with no opener (some templates pre-seed it in the prompt) --
+    everything before that closing tag is reasoning too."""
     if not text:
         return text or "", ""
 

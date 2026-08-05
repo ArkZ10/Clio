@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""F3a SPIKE: read-only grounded extract + span verification.
-
-Proves the extract shape and the >=0.90 span-grounding gate on a few library
-PDFs BEFORE any persistence (F3b) or explore PDF-fetch (F1). Writes NOTHING to
-the database. Throwaway proving script, not pipeline code.
+"""Spike, read-only: grounded extract + span verification. Proves the extract
+shape and the >=0.90 span-grounding gate on a few library PDFs before any
+persistence. Writes nothing to the database. Throwaway, not pipeline code.
 """
 import asyncio
 import json

@@ -23,12 +23,8 @@ router = APIRouter()
 
 
 def _resolve_vault() -> Path:
-    """The configured vault directory, or a clean 503.
-
-    Misconfiguration is an expected operational state (the path is per-machine
-    and never hardcoded), so it gets an explicit, explanatory status -- never an
-    unhandled exception surfacing as a 500.
-    """
+    """The configured vault directory, or a clean 503 -- misconfiguration is
+    expected here (the path is per-machine), not a 500."""
     if not VAULT_PATH:
         raise HTTPException(
             status_code=503,
@@ -69,17 +65,14 @@ async def get_vault_page(stem: str):
 
 @router.get("/vault/library")
 async def get_vault_library():
-    """The Library feature's paper list -- wiki/sources pages that have a real
-    PDF attached. See vault.list_sources for what counts."""
+    """The Library paper list. See vault.list_sources for what counts."""
     vault = _resolve_vault()
     return {"papers": list_sources(vault)}
 
 
 @router.get("/vault/raw/{stem}")
 async def get_vault_raw_pdf(stem: str):
-    """Serves a source page's attached PDF, inline (not a forced download) so
-    it opens directly in a browser tab -- the vault stays read-only, this only
-    ever reads bytes off disk."""
+    """Serves a source's attached PDF inline, not a forced download."""
     vault = _resolve_vault()
     pdf_path = find_source_pdf(vault, stem)
     if pdf_path is None:

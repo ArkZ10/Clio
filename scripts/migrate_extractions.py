@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""F3b migration: create the `extractions` table (ADD-ONLY, never alters paper).
-
-One extraction row per paper (UNIQUE paper_id), so re-running run_extract
-replaces rather than duplicates. paper_id FKs paper(id) (INTEGER PK).
+"""Migration: creates the `extractions` table, add-only, never alters paper.
+One row per paper (UNIQUE paper_id), so re-running run_extract replaces
+rather than duplicates.
 """
 import sys
 from pathlib import Path

@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""F3b: extract grounded fields and PERSIST them to the `extractions` table.
-
-Adds DB writes + a retry-and-flag handler for empty / stochastic-reasoning
-responses on top of the F3a-proven extract shape and >=0.90 grounding gate.
-Only the extractions table is written; paper is never touched.
+"""Extracts grounded fields and persists them to the `extractions` table. DB
+writes + a retry-and-flag handler for empty/stochastic-reasoning responses on
+top of the proven extract shape and >=0.90 grounding gate. Only extractions
+is written, paper is never touched.
 """
 import asyncio
 import json
@@ -35,10 +34,8 @@ from spike_f3a_extract import (
     verify_span,
 )
 
-# Production input gate, owned here (not inherited from the throwaway spike).
-# Raised 120000 -> 250000 after the gate-raise experiment showed every paper in
-# the corpus (max ~137k chars / ~49k input tokens) extracts clean with huge
-# headroom; 250k keeps a wide margin while still guarding truly enormous inputs.
+# Raised from 120k after the gate-raise experiment showed every paper in the
+# corpus (max ~137k chars) extracts clean with huge headroom.
 MAX_INPUT_CHARS = 250000
 EXTRACT_MAX_TOKENS = 16000
 EXTRACT_MODEL = "deepseek"  # the endpoint resolve_stage("extract") points at

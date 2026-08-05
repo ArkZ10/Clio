@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""Step 1: ADD-ONLY migration -- create the F4c synthesis persistence tables.
-
-Does NOT alter paper / extractions / paper_text / cluster / paper_cluster.
+"""Add-only migration: creates the synthesis persistence tables. Doesn't
+alter paper / extractions / paper_text / cluster / paper_cluster.
 """
 import sys
 from pathlib import Path

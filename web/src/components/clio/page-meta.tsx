@@ -1,10 +1,8 @@
-/** Frontmatter as compact chips + tags, shared by every place a vault page
- *  gets rendered (routes/vault.tsx's detail pane, routes/library.tsx's note
- *  panel). Replaces dumping the raw YAML into the markdown renderer, which
- *  produced a wall of bold `key: value` text. */
+/** Frontmatter as compact chips + tags, shared by vault.tsx and library.tsx's
+ *  page viewers. */
 
-/** Frontmatter fields worth surfacing, in display order. The rest (title,
- *  created, sources, ...) are either shown elsewhere or too noisy for a header. */
+/** Fields worth surfacing, in display order. The rest are shown elsewhere or
+ *  too noisy for a header. */
 const META_FIELDS = [
   "type",
   "status",

@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
-"""Concurrent orchestration around the EXISTING extract+verify+persist path.
-
-Orchestration only -- extraction, verify_span, the prompt, retry, and the upsert
-SQL are reused from run_extract.py UNCHANGED. The slow part (LLM call + span
-verification) runs concurrently under a Semaphore; DB writes are serialized by
-using a SINGLE shared sqlite connection (single writer => no lock contention),
-which fits run_extract's existing pattern (extract_and_persist writes internally
-via the passed connection, and that write is a synchronous no-await upsert).
+"""Concurrent orchestration around the existing extract+verify+persist path.
+Extraction, verify_span, the prompt, retry, and the upsert SQL are all reused
+from run_extract.py unchanged. The slow part (LLM call + span verification)
+runs concurrently under a Semaphore; DB writes are serialized through a single
+shared sqlite connection, matching run_extract's existing single-writer pattern.
 """
 import asyncio
 import sqlite3

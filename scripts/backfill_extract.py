@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""F3b BACKFILL: extract+persist for the remaining LIBRARY papers not yet in
-`extractions`, plus a re-write idempotency check and a status-distribution dump.
-
-Reuses run_extract.py's extract_and_persist AS-IS -- no new extraction,
-verification, or persistence logic. Explore papers (no PDFs) are excluded.
+"""Backfill: extract+persist for library papers not yet in `extractions`, plus
+a re-write idempotency check and a status-distribution dump. Reuses run_extract.py's
+extract_and_persist as-is. Explore papers (no PDFs) are excluded.
 """
 import asyncio
 import sys

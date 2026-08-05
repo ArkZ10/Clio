@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
-"""F4a: per-cluster SYNTHESIS, READ-ONLY, with citation verification.
+"""Per-cluster synthesis, read-only, with citation verification. Proves
+two-tier grounding on relational claims before any top-level pass or
+persistence. Writes nothing to the DB. Routes to deepseek via routing.py.
 
-Proves two-tier grounding works on RELATIONAL claims before any top-level pass
-(F4b) or persistence. WRITES NOTHING TO THE DB. Synthesis routes to DeepSeek via
-the existing routing.py table (stage='synthesis' -> 'deepseek'); no overrides.
-
-Pipeline per cluster (exploration_id=1):
-  Step 0  assemble inputs (member extraction field VALUES; dropped/NULL skipped)
-  Step 1  one DeepSeek synthesis call (retry once on empty/parse-fail)
-  Step 2  citation verification: VALID-IDS, TYPE-ARITY, COVERAGE
-  Step 3  readout + grounding line
+Pipeline per cluster:
+  1. assemble inputs (member extraction field values; dropped/NULL skipped)
+  2. one synthesis call (retry once on empty/parse-fail)
+  3. citation verification: valid ids, type/arity, coverage
+  4. readout + grounding line
 """
 import asyncio
 import json

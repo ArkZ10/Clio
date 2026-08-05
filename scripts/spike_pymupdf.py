@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""THROWAWAY DIAGNOSTIC SPIKE -- evaluate pymupdf4llm extraction quality.
-
-Writes NOTHING to the database, imports NOTHING from backend/, builds no
-pipeline. Reads a few real library PDFs, dumps their markdown to spike_out/,
-and prints a quality readout. Delete this script and spike_out/ when done.
+"""Throwaway diagnostic: evaluates pymupdf4llm extraction quality. Writes
+nothing to the DB, imports nothing from backend/. Reads a few real library
+PDFs, dumps their markdown to spike_out/, prints a quality readout. Delete
+this script and spike_out/ when done.
 """
 import re
 from pathlib import Path

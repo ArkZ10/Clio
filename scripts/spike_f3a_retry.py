@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""F3a RETRY -- narrow diagnostic: was DeepSeek's empty response on the 2 long
-papers OUTPUT-BUDGET starvation (fixable via max_tokens) or INPUT-SIZE failure
-(needs chunking)? Plus: token split readout, and proving the gate's FAIL path.
+"""Narrow diagnostic: was DeepSeek's empty response on long papers output-
+budget starvation (fixable via max_tokens) or input-size failure (needs
+chunking)? Plus a token split readout and proving the gate's fail path.
 
-READ-ONLY. Writes NOTHING to the database. Reuses the original spike's helpers.
+Read-only, writes nothing. Reuses the original spike's helpers.
 """
 import asyncio
 import json

@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-"""Backfill arxiv_id on library papers, gated on ABSTRACT agreement (not title).
-
-For each library paper with arxiv_id IS NULL: search arXiv by title, then write
-the candidate's arxiv_id ONLY IF the normalized abstracts match >= MATCH_THRESHOLD.
-A wrong arxiv_id is worse than a missing one, so NULL is the correct outcome for
-anything uncertain.
+"""Backfill arxiv_id on library papers, gated on abstract agreement (not
+title): search arXiv by title, write the candidate's arxiv_id only if the
+normalized abstracts match >= MATCH_THRESHOLD. A wrong id is worse than a
+missing one.
 """
 import difflib
 import re

@@ -1,19 +1,12 @@
-"""LLM-generated cluster labels. The first real LLM job in the app.
+"""LLM-generated cluster labels.
 
-Writes to cluster.llm_label, never to cluster.label -- the numeric placeholder
-("Cluster 0") stays put as a fallback in case a label is missing or a bad run
-produced garbage.
+Writes to cluster.llm_label, never cluster.label -- the numeric placeholder
+("Cluster 0") stays as a fallback if a label is missing or a run goes bad.
 
-Two prior attempts asked qwen3:4b (local) for a prose label and post-processed
-the response (first-line, then last-line + a reasoning-marker blocklist).
-Both failed the same way: the model rambled past any token budget we gave it
-and never reached an answer, regardless of prompt shape (plain text, JSON,
-one-shot example). The JSON-parsing approach (parse_label below) is solid --
-failures reject to a clean None rather than writing garbage -- but the model
-itself was the bottleneck, not the parsing. This stage now routes to deepseek
-instead, with titles AND abstracts as context (DeepSeek's reasoning is
-already cleanly separated into CallResult.reasoning, never .text, so a small
-model's tendency to ramble into the visible answer isn't a risk here).
+Routes to deepseek, whose reasoning lands in CallResult.reasoning rather than
+.text, so a big token budget funds reasoning without a rambling preamble
+leaking into the visible answer -- an earlier local-model attempt rambled past
+budget and never reached an answer at all.
 """
 import json
 import re
@@ -49,8 +42,7 @@ def parse_label(raw: str) -> str | None:
 
     obj = _try_parse_json(text)
     if obj is None:
-        # qwen3 may wrap the JSON in stray prose even when asked not to --
-        # fall back to locating the first {...} substring.
+        # The model may wrap the JSON in stray prose despite being told not to.
         match = _FIRST_JSON_OBJECT_RE.search(text)
         if match:
             obj = _try_parse_json(match.group(0))
@@ -130,10 +122,8 @@ def _build_messages(papers: list[tuple[str, str | None]]) -> list[dict]:
     user_prompt = f"Papers in this cluster:\n{papers_block}\n\nLabel:"
     return [
         {"role": "system", "content": SYSTEM_PROMPT},
-        # One-shot example (off-domain on purpose -- computer vision, not
-        # diffusion/safety/LLM): if the model parrots "Image Classification"
-        # back on an unrelated cluster, that's visibly wrong rather than
-        # silently plausible.
+        # Off-domain on purpose: if the model parrots this back on an
+        # unrelated cluster, that's visibly wrong, not silently plausible.
         {"role": "user", "content": _EXAMPLE_USER_PROMPT},
         {"role": "assistant", "content": _EXAMPLE_ASSISTANT_REPLY},
         {"role": "user", "content": user_prompt},
@@ -162,12 +152,7 @@ async def label_clusters() -> list[dict]:
         raw_text = None
         if papers:
             messages = _build_messages(papers)
-            # llm_switch's build_request has no format/JSON-mode passthrough
-            # (checked -- closed kwarg signature, no **kwargs), so there's no
-            # decode-level enforcement here; we rely on the prompt + parsing.
-            # deepseek's reasoning lands in CallResult.reasoning, never .text,
-            # so a big budget funds reasoning safely without risking a
-            # rambling preamble leaking into the visible answer.
+            # No JSON-mode passthrough in llm_switch -- relies on prompt + parsing.
             result = await llm_switch.call(
                 messages, endpoint.name, thinking=False, max_tokens=2000
             )

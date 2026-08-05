@@ -1,24 +1,15 @@
 /**
- * Obsidian-style [[Page]] / [[Page|Alias]] wikilinks, shared between the vault
- * page viewer (routes/vault.tsx) and chat answers (components/clio/chat-
- * surface.tsx) -- the backend's ANSWER_SYSTEM_PROMPT (backend/chat.py) asks
- * the model to cite inline in this same [[Page]] form, so both render sites
- * need the same handling.
+ * Obsidian-style [[Page]] / [[Page|Alias]] wikilinks, shared by the vault page
+ * viewer and chat answers (the model cites inline in this same form).
  *
- * Split into a parse-time half and a render-time half:
- *   - remarkWikiLinks turns `[[..]]` into a real mdast link node with a
- *     `wiki:<encoded target>` URL. It has no idea which pages actually exist
- *     -- that's not available at parse time -- so it never decides resolved
- *     vs. unresolved.
- *   - makeStemResolver + makeWikiLinkRenderer do that resolution at render
- *     time, against whatever stems the caller actually has loaded. Case-
- *     insensitive fallback mirrors build_graph's lower_to_stem in
- *     backend/vault.py, so a link that resolves on the backend graph resolves
- *     here too.
+ * Two halves: remarkWikiLinks turns `[[..]]` into a link node with a
+ * `wiki:<target>` URL at parse time, before it's known which pages exist.
+ * makeStemResolver + makeWikiLinkRenderer resolve that at render time against
+ * whatever stems the caller has loaded (case-insensitive, mirrors
+ * backend/vault.py's lower_to_stem).
  *
- * Unresolved links render as plain dim text, never a broken link or a
- * "create page" prompt -- the vault is read-only end to end, there is nothing
- * to create.
+ * Unresolved links render as plain dim text -- never a broken link or a
+ * "create page" prompt, the vault is read-only.
  */
 import type { ReactNode } from "react";
 import type { Root } from "mdast";
@@ -29,27 +20,24 @@ const WIKI_SCHEME = "wiki:";
 
 const WIKILINK_RE = /\[\[([^[\]]+?)\]\]/g;
 
-/** Splits `Target|Alias` on the first (optionally backslash-escaped) pipe.
- *  The escaped form shows up inside GFM table cells -- backend/vault.py's
- *  _ALIAS_SPLIT_RE documents why -- and by the time remark-gfm has parsed the
- *  cell into a text node the backslash may or may not still be there, so both
- *  are matched here. */
+/** Splits `Target|Alias` on the first (optionally backslash-escaped) pipe --
+ *  the escaped form shows up in GFM table cells, see backend/vault.py's
+ *  _ALIAS_SPLIT_RE. */
 function splitAlias(inner: string): [string, string | undefined] {
   const m = inner.match(/\\?\|/);
   if (!m || m.index === undefined) return [inner, undefined];
   return [inner.slice(0, m.index), inner.slice(m.index + m[0].length)];
 }
 
-/** Mirrors backend/vault.py's parse_links target normalisation: drop a
- *  #Heading or ^block suffix and a folder/ prefix, so the same source text
- *  resolves to the same stem on both ends. */
+/** Mirrors backend/vault.py's parse_links: drop a #Heading/^block suffix and
+ *  a folder/ prefix. */
 function normalizeTarget(raw: string): string {
   return raw.split("#")[0]!.split("^")[0]!.split("/").pop()!.trim();
 }
 
-/** Remark plugin: [[Target]] / [[Target|Alias]] -> a link node pointing at
- *  `wiki:<encoded target>`. Runs after remarkGfm in the plugin list so table
- *  cells are already split correctly before this scans their text nodes. */
+/** [[Target]] / [[Target|Alias]] -> a link node pointing at
+ *  `wiki:<encoded target>`. Run after remarkGfm so table cells are already
+ *  split. */
 export function remarkWikiLinks() {
   return (tree: Root) => {
     findAndReplace(tree, [
@@ -71,29 +59,23 @@ export function remarkWikiLinks() {
   };
 }
 
-/** Decodes a `wiki:<target>` href back to the raw target text, or null if
- *  `href` isn't one of ours (a normal http(s) link). */
+/** Decodes a `wiki:<target>` href, or null for a normal http(s) link. */
 function wikiLinkTarget(href: string | undefined): string | null {
   if (!href?.startsWith(WIKI_SCHEME)) return null;
   return decodeURIComponent(href.slice(WIKI_SCHEME.length));
 }
 
-/** react-markdown's default `urlTransform` allowlists http(s)/mailto/etc and
- *  blanks any other URL scheme -- including ours -- before a link ever
- *  reaches `components.a`, as an XSS guard against things like `javascript:`
- *  hrefs. That silently turned every wikilink into a `href=""` anchor, which
- *  is why clicking one just reopened the current page in a new tab instead of
- *  reaching makeWikiLinkRenderer at all. Pass this as the `urlTransform` prop
- *  everywhere remarkWikiLinks is used, so `wiki:` URLs pass through untouched
- *  while everything else keeps the default sanitisation. */
+/** react-markdown's default urlTransform blanks any URL scheme it doesn't
+ *  allowlist (an XSS guard), which silently killed every wikilink href before
+ *  it reached makeWikiLinkRenderer. Pass this as `urlTransform` wherever
+ *  remarkWikiLinks is used -- `wiki:` passes through, everything else keeps
+ *  the default sanitisation. */
 export function wikiAwareUrlTransform(value: string): string {
   return value.startsWith(WIKI_SCHEME) ? value : defaultUrlTransform(value);
 }
 
 /** Case-insensitive lookup against a known set of vault stems. Exact match
- *  wins; every link in the vault is currently exact-case, so the lowercase
- *  fallback only ever helps -- same tradeoff as backend/vault.py's
- *  lower_to_stem. */
+ *  wins, same as backend/vault.py's lower_to_stem. */
 export function makeStemResolver(stems: Iterable<string>) {
   const exact = new Set(stems);
   const lower = new Map<string, string>();
@@ -104,14 +86,11 @@ export function makeStemResolver(stems: Iterable<string>) {
     exact.has(target) ? target : (lower.get(target.toLowerCase()) ?? null);
 }
 
-/** ReactMarkdown `components.a` override for a tree that's been through
- *  remarkWikiLinks: resolved wikilinks become a clickable button (styling
- *  matches a link, not a button, since that's what it reads as), unresolved
- *  ones become plain dim text, and anything that isn't a `wiki:` href passes
- *  through as a normal external link. `resolve`/`onNavigate` are both
- *  optional so callers with no stem list or nowhere to navigate to (chat on
- *  `/` and `/library` has no page viewer) degrade to inert styled text rather
- *  than a link to nowhere. */
+/** `components.a` override for a tree that's been through remarkWikiLinks:
+ *  resolved wikilinks become a clickable button styled as a link, unresolved
+ *  ones become plain dim text, everything else passes through as a normal
+ *  external link. `resolve`/`onNavigate` are optional so a caller with
+ *  nowhere to navigate to just gets inert styled text. */
 export function makeWikiLinkRenderer(
   resolve: ((target: string) => string | null) | undefined,
   onNavigate: ((stem: string) => void) | undefined,

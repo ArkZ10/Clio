@@ -1,25 +1,18 @@
 #!/usr/bin/env python3
-"""W1: compute + persist semantic kNN edges for the 49 EXPLORE papers.
+"""Computes + persists semantic kNN edges for the explore papers.
 Backend/offline only -- no route, no UI. Idempotent, isolated from library.
 
-ISOLATION APPROACH (Step 0 decision): graph_edge has no source/exploration
-column, only `layer` (library uses layer='semantic', matched by exact string
-equality in backend/routes/library.py). A distinct layer value,
-EXPLORE_LAYER = 'semantic_explore_1' (encodes exploration_id=1), makes explore
-edges completely invisible to the library route's `WHERE layer = 'semantic'`
-query with NO schema change. Confirmed via inspection -- no STOP needed.
+Isolation: graph_edge has no source/exploration column, only `layer` (library
+uses 'semantic'). A distinct value, EXPLORE_LAYER = 'semantic_explore_1',
+makes explore edges invisible to library's `WHERE layer = 'semantic'` query
+with no schema change.
 
-WHY THIS ISN'T A STRAIGHT CALL TO backend/graph/knn.py's build_knn_edges:
-vec_bge_m3 now holds BOTH library (18) and explore (49) vectors in one shared
-index. build_knn_edges's `MATCH ... AND k = ?` query searches the WHOLE table
-with no source filter -- calling it with explore paper_ids as the query set
-would risk pulling LIBRARY papers in as "nearest neighbors", violating explore
-isolation. This module reuses build_knn_edges's exact query shape, weight
-formula (1 - distance), and undirected src<dst dedupe, but over-fetches (k =
-total vectors in the index) and POST-FILTERS candidates down to explore-only
-ids before taking the top-k -- guaranteeing every returned neighbor is a real
-explore paper, without touching backend/graph/knn.py (so library's kNN path is
-byte-for-byte unmodified).
+Not a straight call to backend/graph/knn.py's build_knn_edges: vec_bge_m3 now
+holds both library and explore vectors in one shared index, and that query has
+no source filter, so it could pull library papers in as "neighbors". This
+reuses its exact query shape and weight formula, but over-fetches and
+post-filters down to explore-only ids before taking the top-k, without
+touching backend/graph/knn.py.
 """
 import sys
 from pathlib import Path

@@ -18,15 +18,10 @@ const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 4;
 /** Labels below this zoom would be unreadable mush, so they fade out. */
 const LABEL_MIN_ZOOM = 0.55;
-/** Hard cap on how far a node can move in a single frame. Repulsion still
- *  spikes hard when two nodes start close together, but this stops that spike
- *  from ever showing up as a node flying across the screen -- it just moves
- *  at full speed in the right direction instead. */
+/** Caps how far a node can move per frame, so a repulsion spike moves it fast
+ *  instead of flinging it across the screen. */
 const MAX_SPEED = 8;
-/** Radius scales with degree so hubs read bigger, as in Obsidian. Shared by
- *  the tick loop (which writes label y-offsets imperatively) and the JSX
- *  render (which needs the same number for the initial paint), so it has to
- *  live outside both -- duplicating the formula would let them drift apart. */
+/** Shared by the tick loop and the JSX render so the two can't drift apart. */
 function radiusFor(deg: number, emphasised: boolean): number {
   return 3.5 + Math.min(Math.sqrt(deg) * 1.2, 6) + (emphasised ? 2 : 0);
 }
@@ -50,14 +45,10 @@ export function GraphView({
   const [size, setSize] = useState({ w: 900, h: 560 });
   const [hover, setHover] = useState<string | null>(null);
   const [view, setView] = useState({ x: 0, y: 0, k: 1 });
-  // Only for the cursor style. Set once per pan gesture (down/up), not per
-  // move, so it costs two renders total rather than one per pointermove.
+  // Cursor style only, set once per pan gesture rather than per move.
   const [isPanning, setIsPanning] = useState(false);
-  /** Bumped exactly once per (re)seed -- enough for React to create the DOM
-   *  elements and register the refs below at the freshly-seeded positions.
-   *  NOT bumped per physics frame: once those elements exist, the animation
-   *  loop moves them by writing attributes directly (see the tick effect),
-   *  which is what keeps 60fps from meaning 60 full-tree React re-renders. */
+  // Bumped once per (re)seed so the DOM nodes exist for the refs below --
+  // not per physics frame, that's handled by direct attribute writes.
   const [, setSeedVersion] = useState(0);
 
   const edges = useMemo(() => {
@@ -82,9 +73,8 @@ export function GraphView({
   const indexRef = useRef<Map<string, number>>(new Map());
   const alphaRef = useRef(1);
   const dragRef = useRef<{ id: string; moved: boolean } | null>(null);
-  // startX/startY: pointer position when the pan began. baseX/baseY: view.x/y
-  // at that moment. curX/curY: the live pan position, updated every move and
-  // committed to `view` state exactly once, on pointer-up.
+  // start*/base*: pointer position and view.x/y when the pan began. cur*: the
+  // live pan position, committed to `view` once on pointer-up.
   const panRef = useRef<{
     startX: number;
     startY: number;
@@ -94,16 +84,12 @@ export function GraphView({
     curY: number;
   } | null>(null);
 
-  // Direct-DOM handles for the per-frame hot path. Populated by ref callbacks
-  // in the JSX below; the physics/pan code writes to these instead of calling
-  // setState, so a moving graph never triggers React reconciliation.
+  // Direct-DOM handles for the per-frame hot path -- physics/pan write here
+  // instead of calling setState.
   const nodeElsRef = useRef<Map<string, SVGGElement>>(new Map());
   const edgeElsRef = useRef<Map<string, SVGLineElement>>(new Map());
 
-  // (Re)seed the simulation whenever the graph itself changes -- not on resize,
-  // so resizing no longer throws away the layout the way the old static
-  // recompute did. Triggers exactly one render (setSeedVersion) so the nodes
-  // below exist in the DOM before the tick loop tries to write to their refs.
+  // Reseed on graph change, not on resize (so resizing keeps the layout).
   useEffect(() => {
     const n = nodes.length;
     const deg = new Map<string, number>();
@@ -113,10 +99,8 @@ export function GraphView({
     }
     simRef.current = nodes.map((node, i) => ({
       id: node.id,
-      // Small jitter so nodes don't sit in a perfectly rigid circle, but small
-      // enough that two circle-adjacent nodes can't land near-coincident --
-      // that near-zero starting distance is what caused the violent opening
-      // kick (repulsion grows as 1/d^2, so d~0 briefly produces a huge force).
+      // Small jitter off the perfect circle -- kept small so adjacent nodes
+      // can't land near-coincident and spike repulsion (1/d^2).
       x: Math.cos((i / n) * Math.PI * 2) * 240 + (Math.random() - 0.5) * 12,
       y: Math.sin((i / n) * Math.PI * 2) * 240 + (Math.random() - 0.5) * 12,
       vx: 0,
@@ -131,10 +115,8 @@ export function GraphView({
     setSeedVersion((v) => v + 1);
   }, [nodes, edges]);
 
-  // Continuous force simulation. Runs in rAF for as long as it has energy (or
-  // while dragging), writing positions straight to the SVG DOM via the refs
-  // above -- no setState, so a settled graph costs nothing and an unsettled
-  // one doesn't cost a React render per frame either.
+  // Force simulation: runs in rAF while it has energy, writes positions
+  // straight to the DOM via the refs above -- no per-frame setState.
   useEffect(() => {
     let raf = 0;
     const step = () => {
@@ -145,9 +127,8 @@ export function GraphView({
 
       if (alpha > 0.005 || dragging) {
         const target = 90;
-        // d2 is floored at 100 (== a min separation of 10 units), not the tiny
-        // 0.01 it was before -- that floor is what let two near-coincident
-        // seed points produce a near-infinite force spike on the first frame.
+        // Floored at 100 (min separation 10) so near-coincident seed points
+        // can't spike into a near-infinite force.
         const MIN_D2 = 100;
         for (let i = 0; i < pts.length; i++) {
           for (let j = i + 1; j < pts.length; j++) {
@@ -188,9 +169,7 @@ export function GraphView({
           } else {
             p.vx += -p.x * 0.012; // pull toward the origin
             p.vy += -p.y * 0.012;
-            // Speed clamp: whatever the forces above computed, a single frame
-            // can never move a node more than MAX_SPEED.
-            const speed = Math.hypot(p.vx, p.vy);
+            const speed = Math.hypot(p.vx, p.vy); // clamp to MAX_SPEED
             if (speed > MAX_SPEED) {
               const s = MAX_SPEED / speed;
               p.vx *= s;
@@ -245,9 +224,8 @@ export function GraphView({
     );
   };
 
-  /** Screen (client) point -> graph coordinates, accounting for pan/zoom. Reads
-   *  the live pan position from panRef during an active pan (React `view.x/y`
-   *  isn't updated until pointer-up), falling back to `view` otherwise. */
+  /** Screen point -> graph coordinates. Reads the live pan from panRef during
+   *  an active pan, falls back to `view` otherwise. */
   const toGraph = useCallback(
     (clientX: number, clientY: number) => {
       const rect = svgRef.current?.getBoundingClientRect();
@@ -308,10 +286,8 @@ export function GraphView({
     }
     const pan = panRef.current;
     if (pan) {
-      // Same idea as node dragging: move the group directly every event, and
-      // only commit to React state once the pan ends. A fast trackpad pan can
-      // fire pointermove far more often than 60/frame -- routing that through
-      // setView was the other big source of the "frame rate drop" reports.
+      // Move the group directly every event, commit to state only on pan end
+      // -- a fast trackpad pan fires well over 60 events/sec.
       pan.curX = pan.baseX + (e.clientX - pan.startX);
       pan.curY = pan.baseY + (e.clientY - pan.startY);
       applyGroupTransform(pan.curX, pan.curY, view.k);
@@ -322,9 +298,7 @@ export function GraphView({
     const drag = dragRef.current;
     if (drag) {
       const p = simRef.current[indexRef.current.get(drag.id)!];
-      // Release the node back to the simulation. Obsidian keeps dragged nodes
-      // pinned; letting go feels better with a graph this small.
-      if (p) p.fixed = false;
+      if (p) p.fixed = false; // release back to the simulation
       // A click that never moved is a selection, not a drag.
       if (!drag.moved) onSelect(drag.id);
       dragRef.current = null;
@@ -332,9 +306,7 @@ export function GraphView({
     }
     const pan = panRef.current;
     if (pan) {
-      // Commit the final (not the starting) pan position to React state now
-      // that the fast per-event path is done -- keeps `view` authoritative
-      // for zoom anchoring, the reset button, and the % readout.
+      // Commit the final pan position now that the fast path is done.
       setView((v) => ({ ...v, x: pan.curX, y: pan.curY }));
       panRef.current = null;
       setIsPanning(false);

@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-"""THROWAWAY DIAGNOSTIC SPIKE #2 -- measure pymupdf4llm space-collapse rate.
-
-Measures how often pymupdf4llm fuses words together (e.g. "OT-FMtrulystarts")
-across the whole library. Writes NOTHING to the DB, builds no pipeline, fixes
+"""Throwaway diagnostic: measures how often pymupdf4llm fuses words together
+(e.g. "OT-FMtrulystarts") across the whole library. Writes nothing, fixes
 nothing -- pure measurement. Delete when done.
 """
 import re

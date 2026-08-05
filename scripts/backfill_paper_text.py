@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
-"""Step 2: backfill the paper_text cache for every paper whose pdf_path resolves
-on disk.  Step 3: prove it is a REAL cache (repeat-call HIT, byte-for-byte
-fidelity vs a fresh parse, and stale-detection logic).
-
-Reuses backend.paper_text.get_or_parse_markdown -- the same function a future
-run_extract.py integration will call. No extraction/verify/persist logic touched.
+"""Backfills the paper_text cache for every paper whose pdf_path resolves on
+disk, then proves it's a real cache (repeat-call hit, byte-for-byte fidelity
+vs a fresh parse, stale-detection). Reuses backend.paper_text.get_or_parse_markdown.
 """
 import sys
 from pathlib import Path

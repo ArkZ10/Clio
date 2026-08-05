@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
-"""Embed source='explore' papers with the EXACT v1 path: BGE-M3, title+abstract
-input, stored in vec_bge_m3 keyed to paper.id. Idempotent (skips papers already
-in the index). Explore vectors live in the same index as library but stay
-separable via paper.source (join paper_id -> paper.source). Library vectors are
-not touched.
-
-Input construction is byte-identical to scripts/embed_library.py:
+"""Embeds source='explore' papers the same way as library: BGE-M3, title+abstract
+input, stored in vec_bge_m3 keyed to paper.id. Idempotent. Explore vectors
+share the index with library but stay separable via paper.source; library
+vectors aren't touched. Input construction matches embed_library.py exactly:
     text = f"{title}\\n{abstract}" if title else abstract
 """
 import sys

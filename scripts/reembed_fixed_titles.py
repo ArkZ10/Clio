@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-"""Force re-embed papers whose titles were fixed, comparing fresh vs stored
-vector so we can REPORT whether each was actually stale or already current.
+"""Force re-embeds papers whose titles were fixed, comparing fresh vs stored
+vector to report whether each was actually stale or already current.
 
 No timestamp exists on vec_bge_m3 to detect staleness automatically, so this
-operates on the explicit list of papers whose titles were fixed this session.
-The embed text is title+abstract, so the cosine between the freshly-computed
-vector and the stored one tells us directly: ~1.0 = stored vector already
-encodes the current title (current); notably < 1.0 = it encoded the old
-garbled title (stale, now corrected).
+operates on an explicit list. Cosine ~1.0 between fresh and stored vector
+means the stored one already encoded the current title; notably <1.0 means it
+encoded the old garbled title.
 """
 import sys
 from pathlib import Path

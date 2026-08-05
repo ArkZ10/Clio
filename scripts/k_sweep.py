@@ -1,15 +1,10 @@
 #!/usr/bin/env python3
 """Read-only sweep of kNN k values to compare graph density (hairball check).
+Persists nothing -- build_knn_edges only selects, cluster_papers is pure.
 
-Persists NOTHING -- build_knn_edges only SELECTs from vec_bge_m3, and
-cluster_papers is pure. The committed graph in the DB is left untouched; the
-user picks a final k after seeing this table.
-
-Clustering MUST stay frozen across k: clusters come from HDBSCAN on the
-embeddings X, edges come from kNN on k. cluster_papers() never receives k, so
-its output must be byte-identical for every k -- this script verifies that and
-flags it loudly if it ever isn't (which would mean edges are leaking into
-clustering).
+Clustering must stay frozen across k (it never receives k, only the
+embeddings) -- this script verifies that and flags loudly if it ever isn't,
+which would mean edges are leaking into clustering.
 """
 import sys
 from pathlib import Path

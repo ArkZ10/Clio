@@ -9,8 +9,7 @@ sys.path.insert(0, str(ROOT))
 
 import dotenv
 
-# cluster_label now routes to deepseek -- load .env here (application-script
-# concern, same pattern as llm_smoke.py) so DEEPSEEK_API_KEY resolves
+# cluster_label routes to deepseek -- load .env so DEEPSEEK_API_KEY resolves
 # regardless of the calling shell's environment.
 dotenv.load_dotenv(ROOT / ".env")
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""THROWAWAY EXPERIMENT: do the 5 over-length papers extract cleanly at a raised
+"""Throwaway experiment: do the over-length papers extract cleanly at a raised
 input gate (200k) + larger output budget (16k)? Decides whether chunking must
-exist. READ-ONLY -- writes NOTHING to the DB. Reuses run_extract.py's prompt,
-call pattern, and verify_span via spike_f3a_extract.
+exist. Read-only, writes nothing. Reuses run_extract.py's prompt, call
+pattern, and verify_span via spike_f3a_extract.
 """
 import asyncio
 import json

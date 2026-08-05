@@ -125,9 +125,7 @@ function LibraryPage() {
     queryFn: fetchLibrary,
   });
 
-  // Needed only to resolve [[wikilinks]] inside a note to real stems, so a
-  // link out of a paper's note (into a claim, say) can still be followed
-  // in place rather than reading as dead text.
+  // Only needed to resolve [[wikilinks]] inside a note to real stems.
   const graphQuery = useQuery({
     queryKey: ["vault", "graph"],
     queryFn: fetchVaultGraph,
@@ -144,9 +142,7 @@ function LibraryPage() {
     [graphQuery.data],
   );
 
-  // Resolves a cited stem to its title + category so chat citation chips
-  // carry the same colours as the vault graph legend -- same map vault.tsx
-  // builds for the same reason.
+  // Resolves a cited stem to title + category for the chat chips.
   const nodeByStem = useMemo(() => {
     const map = new Map<string, { title: string; category: string }>();
     for (const n of graphQuery.data?.nodes ?? []) {
@@ -155,9 +151,7 @@ function LibraryPage() {
     return map;
   }, [graphQuery.data]);
 
-  // Following a wikilink inside a note swaps the viewer to that page, whether
-  // or not it's one of the papers in the list on the left -- same as clicking
-  // a citation or a node does on /vault.
+  // A wikilink inside a note swaps the viewer to that page, paper or not.
   const wikiLinkComponent = useMemo(
     () =>
       makeWikiLinkRenderer(resolveStem, (stem) => {
@@ -353,6 +347,7 @@ function LibraryPage() {
             </div>
             <div className="min-h-0 flex-1">
               <ChatSurface
+                surface="library"
                 compact
                 emptyTitle="Ask your library"
                 emptySubtitle="Answers cite the wiki pages they came from. Click a citation to read it right here."

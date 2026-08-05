@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
-"""F4c: PERSIST the explore synthesis (F4a per-cluster + F4b top-level + the
-scattered list), keyed to exploration_id=1, with the cluster->paper_id mapping
-so cluster-cited top-level claims resolve to papers.
+"""Persists the explore synthesis (per-cluster + top-level + the scattered
+list), keyed to exploration_id=1, with the cluster->paper_id mapping so
+cluster-cited top-level claims resolve to papers.
 
-Regenerates F4a + F4b IN-MEMORY via their existing generators (synthesize_
-clusters.py / synthesize_toplevel.py) -- their synthesis/verification LOGIC is
-untouched, only reused. If grounding is not CLEAN at either tier, this STOPS and
-does not persist.
+Regenerates both tiers in-memory via their existing generators
+(synthesize_clusters.py / synthesize_toplevel.py) -- reused, not modified. If
+grounding isn't clean at either tier, this stops and persists nothing.
 
-Idempotent per exploration_id: re-running REPLACES the prior run (delete +
-reinsert), never duplicates.
+Idempotent per exploration_id: re-running replaces the prior run.
 """
 import asyncio
 import json

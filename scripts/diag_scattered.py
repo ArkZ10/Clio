@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
-"""DIAGNOSTIC (read-only, no writes): do the SCATTERED explore papers hide
-coherent sub-groups that the full-set HDBSCAN missed?
+"""Diagnostic, read-only: do the scattered explore papers hide coherent
+sub-groups the full-set HDBSCAN missed?
 
-Scattered = explore papers that are HDBSCAN noise (label -1, i.e. not a member
-of ANY cluster row) OR members of the folded small cluster (db cluster.id=20,
-exploration_id=1). Papers with no vector (e.g. id=69, no PDF) are excluded.
-
-Nothing is written. This does not touch the real pipeline's clustering params,
-does not re-cluster the full set, and does not persist anything -- it only
-inspects the BGE-M3 vectors already in vec_bge_m3 for the scattered subset.
+Scattered = HDBSCAN noise (label -1) or members of the folded small cluster
+(cluster.id=20). Papers with no vector are excluded. Inspects the existing
+vec_bge_m3 vectors for that subset only -- doesn't touch pipeline params,
+doesn't re-cluster the full set, writes nothing.
 """
 import sys
 from pathlib import Path

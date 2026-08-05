@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""Step 1: ADD-ONLY migration -- create the `paper_text` markdown cache table.
-
-Does NOT alter the `paper` or `extractions` tables. One row per paper.
+"""Add-only migration: creates the `paper_text` markdown cache table. Doesn't
+alter `paper` or `extractions`. One row per paper.
 """
 import sys
 from pathlib import Path

@@ -1,13 +1,9 @@
 """LLM relevance scoring over retrieved arXiv papers.
 
-Scores ONLY -- no DB writes, no persistence. The point of this step is the
-1:1 validation: a rerank whose output doesn't map exactly onto the real input
-papers is worthless, so a bad mapping fails loud rather than silently
-defaulting or fabricating.
-
-The model sees only a stable 1..N index per paper, never the arxiv_id, so it
-can't invent a plausible-looking ID -- an invented index is caught by
-validation instead.
+Scores only -- no DB writes. A rerank whose output doesn't map 1:1 onto the
+input papers fails loud rather than defaulting or fabricating. The model sees
+a stable 1..N index per paper, never the arxiv_id, so an invented index is
+caught by validation instead of silently accepted.
 """
 import json
 import re
@@ -35,9 +31,7 @@ def _build_messages(query: str, papers: list) -> list[dict]:
     lines = [f"Query: {query}", "", "Papers:"]
     for i, p in enumerate(papers, start=1):
         lines.append(f"{i}. {p.title}\n{p.abstract}\n")
-    # Pin the index convention explicitly: the numbers below are 1..N and the
-    # model must echo those exact numbers (DeepSeek otherwise defaults to
-    # 0-based, which fails the strict 1..N validation).
+    # DeepSeek otherwise defaults to 0-based indices, which fails validation.
     lines.append(
         f"\nUse the exact number shown before each paper as its \"index\". "
         f"Indices run from 1 to {len(papers)}. Do not start at 0. "
@@ -65,9 +59,8 @@ def _extract_json(raw: str) -> dict:
 
 
 def _validate(rankings: list, n: int) -> dict[int, dict]:
-    """Enforce exactly-one-entry-per-input, indices in 1..N, scores in [0,10].
-    Returns {index: {score, reason}}. Raises RerankValidationError naming the
-    specific missing / extra / out-of-range indices."""
+    """Enforces one entry per input, indices in 1..N, scores in [0,10].
+    Returns {index: {score, reason}}, or raises naming what's wrong."""
     expected = set(range(1, n + 1))
     seen = {}
     extra = []
@@ -109,20 +102,16 @@ def _validate(rankings: list, n: int) -> dict[int, dict]:
 
 
 async def rerank(query: str, papers: list) -> list:
-    """Score each paper's relevance to the query via the routed LLM, validate
-    a strict 1:1 mapping back to the inputs, and return them sorted by score
-    descending. Each returned paper carries `.score` and `.reason`.
-
-    Raises RerankValidationError if the model's response doesn't map exactly
-    onto the input papers -- never fabricates or defaults."""
+    """Scores each paper's relevance via the routed LLM, validates a strict
+    1:1 mapping back to the inputs, returns them sorted by score descending.
+    Each paper carries `.score` and `.reason`."""
     n = len(papers)
     if n == 0:
         return []
 
     messages = _build_messages(query, papers)
     endpoint = resolve_stage("rerank")
-    # ~50-70 tokens per entry once a full-sentence reason is included; 60*N
-    # truncated the JSON in practice, so budget more generously.
+    # 60*n truncated the JSON in practice -- budget more generously.
     max_tokens = min(120 * n, 8000)
 
     result = await llm_switch.call(

@@ -28,6 +28,7 @@ function ChatPage() {
       </header>
       <div className="min-h-0 flex-1">
         <ChatSurface
+          surface="home"
           suggestions={[
             "What decides whether a diffusion model's output is safe?",
             "What does my wiki say about remasking?",

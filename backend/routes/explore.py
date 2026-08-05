@@ -1,6 +1,5 @@
-"""W2: read-only explore routes. Mirrors backend/routes/library.py's query
-shape but scoped to explore data. library.py is not imported from or modified
-by this file -- no shared logic, no shared router.
+"""Read-only explore routes. Mirrors routes/library.py's query shape, scoped
+to explore data -- no shared logic or router between the two.
 """
 import json
 
@@ -10,7 +9,7 @@ from backend.config import DB_PATH
 from backend.db import connect
 
 EXPLORE_EXPLORATION_ID = 1
-EXPLORE_LAYER = "semantic_explore_1"  # from W1 -- distinct from library's 'semantic'
+EXPLORE_LAYER = "semantic_explore_1"  # distinct from library's 'semantic'
 
 router = APIRouter()
 
