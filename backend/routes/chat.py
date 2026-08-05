@@ -50,7 +50,7 @@ async def post_vault_chat(req: ChatRequest):
                 stems.insert(0, req.page_context)
 
         history = [t.model_dump() for t in req.history] if req.history else None
-        text, cited = await answer(question, stems, records, history)
+        text, cited, did_answer = await answer(question, stems, records, history)
     except SelectionFailed as e:
         # A broken selection step must NOT be reported as "your wiki doesn't
         # cover this" -- that would be a confident false negative.
@@ -68,8 +68,8 @@ async def post_vault_chat(req: ChatRequest):
         "cited_pages": cited,
         "selected_pages": stems,
         "dropped_count": dropped,
-        # NOTE: this reflects the empty-selection case only. If selection
-        # over-picked loosely-related pages and the answer then hedges, this is
-        # still False -- a known V2 limitation, see backend/chat.py.
-        "no_coverage": not stems,
+        # True on EITHER guard: empty selection (Guard 1), or the answer step's
+        # own COVERAGE: NO judgement on the pages it was actually given
+        # (Guard 2) -- see backend/chat.py's answer() / _split_coverage_header.
+        "no_coverage": (not stems) or (not did_answer),
     }

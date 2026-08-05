@@ -16,13 +16,16 @@ rests on two guards, both prompt-mediated:
   Guard 2 (over-selection) -- the likelier failure is the model being helpful
     and returning loosely-related pages instead of []. Guard 1 does nothing
     there; the answer prompt's "say so plainly rather than inferring" clause is
-    the only defence.
+    the backstop, and it DOES feed `no_coverage` now: the answer step is asked
+    to prefix its response with a `COVERAGE: YES`/`NO` line (see
+    ANSWER_SYSTEM_PROMPT), which _split_coverage_header parses and strips
+    before the text ever reaches a caller. This costs no extra LLM call -- it
+    rides on the same answer-generation request, not a dedicated one.
 
-KNOWN LIMITATION (V2): `no_coverage` reflects only the empty-selection case. If
-step 1 over-selects and step 2 hedges, the response still reads no_coverage=false
-with pages cited. Surfacing that properly needs a second-pass coverage signal
-from step 2, which is out of scope here -- selected_pages/dropped_count are
-returned so the gap is at least inspectable.
+    This is still model judgement, not a deterministic check, and the parser
+    fails OPEN (did_answer=True) whenever the model doesn't emit the header in
+    the expected shape -- a missed signal must never turn a real answer into a
+    false "not covered", which would be a worse failure than staying silent.
 
 Read-only: this module never writes to the vault.
 """
@@ -53,6 +56,10 @@ _CODE_FENCE_RE = re.compile(r"^```(?:json)?\s*|\s*```$", re.IGNORECASE)
 # r"\{.*\}" (an object), so it cannot recover the list this step returns --
 # hence a local parser rather than reusing that helper.
 _FIRST_JSON_ARRAY_RE = re.compile(r"\[.*\]", re.DOTALL)
+# The answer step's leading "COVERAGE: YES/NO\n---\n" header (see
+# ANSWER_SYSTEM_PROMPT). Matched only at the very start of the response so it
+# can't accidentally fire on the word "coverage" appearing in prose.
+_COVERAGE_HEADER_RE = re.compile(r"\A\s*COVERAGE:\s*(YES|NO)\s*\n-{3,}\s*\n?", re.IGNORECASE)
 
 SELECT_PROMPT = """\
 Here is the index of a personal research wiki. Each entry is a page with a
@@ -75,7 +82,17 @@ Answer using ONLY the wiki pages provided below. Cite the page names you used,
 inline, as [[Page Name]].
 If the provided pages do not actually contain the answer, say so plainly rather
 than inferring. Do not use outside knowledge as if it were from the wiki; if you
-add context from general knowledge, label it clearly as outside the wiki.\
+add context from general knowledge, label it clearly as outside the wiki.
+
+Before your answer, output ONE line stating whether the provided pages actually
+contain the answer, in EXACTLY this form (nothing else on that line):
+COVERAGE: YES
+or
+COVERAGE: NO
+Then a line containing exactly --- on its own, then your answer.
+Use COVERAGE: NO whenever the pages do not actually answer the question -- even
+if you still write something explaining what the pages DO cover instead. Only
+use COVERAGE: YES when your answer genuinely comes from the provided pages.\
 """
 
 class SelectionFailed(Exception):
@@ -132,6 +149,22 @@ def _extract_json_array(raw: str) -> list | None:
         except (json.JSONDecodeError, ValueError):
             pass
     return None
+
+
+def _split_coverage_header(raw: str) -> tuple[bool, str]:
+    """(did_answer, clean_text) -- parses the answer step's leading
+    "COVERAGE: YES/NO" header and strips it, so callers/the UI only ever see
+    clean prose, never the internal signal.
+
+    Fails OPEN: if the model didn't emit the header in the expected shape,
+    did_answer defaults to True and the raw text is returned unchanged. A
+    parsing miss must never turn a real answer into a false "not covered".
+    """
+    match = _COVERAGE_HEADER_RE.match(raw)
+    if not match:
+        return True, raw.strip()
+    did_answer = match.group(1).upper() == "YES"
+    return did_answer, raw[match.end():].strip()
 
 
 async def _call_select(question: str, index_body: str) -> list | None:
@@ -220,15 +253,23 @@ async def answer(
     stems: list[str],
     records: dict[str, dict],
     history: list[dict] | None = None,
-) -> tuple[str, list[str]]:
-    """(answer_text, cited_pages).
+) -> tuple[str, list[str], bool]:
+    """(answer_text, cited_pages, did_answer).
 
     GUARD 1: with no pages selected, this returns a fixed response and never
     calls the LLM -- there is nothing to ground an answer in, so none is
-    generated. Note this only fires on a decision select_pages already made.
+    generated. did_answer=False here (nothing was answered), though the
+    caller's no_coverage is already True via empty selection regardless.
+
+    GUARD 2: with pages selected, did_answer reflects the model's own
+    COVERAGE: YES/NO judgement on THIS SAME call (see _split_coverage_header)
+    -- catches the case where selection over-picked loosely-related pages and
+    the model correctly declines to answer from them. When did_answer is
+    False, cited_pages is emptied too: nothing was genuinely grounded, so
+    nothing should render as a citation.
     """
     if not stems:
-        return NO_COVERAGE_ANSWER, []
+        return NO_COVERAGE_ANSWER, [], False
 
     blocks = []
     for stem in stems:
@@ -237,7 +278,7 @@ async def answer(
             continue
         blocks.append(f"### {stem}\n\n{page_body(record)}")
     if not blocks:
-        return NO_COVERAGE_ANSWER, []
+        return NO_COVERAGE_ANSWER, [], False
 
     pages_text = "\n\n---\n\n".join(blocks)
     user_content = f"Wiki pages:\n\n{pages_text}\n\n---\n\nQuestion: {question}"
@@ -252,13 +293,18 @@ async def answer(
         messages, endpoint.name, thinking=False, max_tokens=ANSWER_MAX_TOKENS
     )
 
-    text = result.text.strip()
+    did_answer, text = _split_coverage_header(result.text)
     if not text:
+        # An empty response is a technical hiccup, not a coverage judgement --
+        # don't conflate "the model failed to respond" with "not covered".
         text = (
             "The model returned an empty response. The pages below were "
             "retrieved but not summarised -- try asking again."
         )
+        did_answer = True
+
     # cited_pages is the set actually SENT, so citations are structured server
-    # data rather than regex-scraped out of the model's prose.
-    cited = [stem for stem in stems if stem in records]
-    return text, cited
+    # data rather than regex-scraped out of the model's prose -- but only when
+    # the model says it actually used them.
+    cited = [stem for stem in stems if stem in records] if did_answer else []
+    return text, cited, did_answer

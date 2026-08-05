@@ -11,7 +11,7 @@ navigable graph, and synthesize grounded summaries of the resulting research cam
 | `packages/llm_switch/` | Local editable package: swappable local/cloud LLM endpoint registry and call layer |
 | `scripts/` | Offline pipeline jobs and one-off migrations (embed, cluster, extract, synthesize, build graph edges, diagnostics) |
 | `data/` | SQLite DB (`clio.db`), fetched PDFs, and caches. Gitignored — not in version control |
-| `web/` | Frontend UI (TanStack Start + Vite + React), imported from the Lovable app |
+| `web/` | Frontend UI (TanStack Start + Vite + React)|
 | `venv/` | Python virtualenv. Gitignored |
 
 ## Running

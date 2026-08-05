@@ -126,9 +126,10 @@ export type VaultChatResponse = {
   selected_pages: string[];
   /** Page names the model invented that don't resolve to a real page. */
   dropped_count: number;
-  /** True only when page selection came back empty. NOTE: if selection
-   *  over-picked loosely-related pages and the answer then hedges, this is
-   *  still false -- a known V2 limitation, see backend/chat.py. */
+  /** True when the wiki doesn't cover the question -- either page selection
+   *  came back empty, or the model was given pages but judged (via its own
+   *  COVERAGE: YES/NO signal) that they don't actually answer it. See
+   *  backend/chat.py's answer(). */
   no_coverage: boolean;
 };
 
