@@ -3,7 +3,8 @@
 Two LLM steps:
   1. select_pages -- show the model index.md, ask which pages are needed. An
      empty list means "this wiki doesn't cover that".
-  2. answer -- send those pages' full text, ask for an answer citing them.
+  2. answer / answer_stream -- send those pages' full text, ask for an answer
+     citing them. answer_stream is the same call streamed token-by-token.
 
 Coverage is a model judgement, not a deterministic check, so anti-fabrication
 rests on two guards:
@@ -21,6 +22,7 @@ from __future__ import annotations
 
 import json
 import re
+from typing import AsyncIterator
 
 import llm_switch
 from backend.routing import resolve_stage
@@ -38,6 +40,12 @@ _FIRST_JSON_ARRAY_RE = re.compile(r"\[.*\]", re.DOTALL)
 # The answer step's leading "COVERAGE: YES/NO\n---\n" header. Anchored to the
 # start so it can't fire on "coverage" appearing in prose.
 _COVERAGE_HEADER_RE = re.compile(r"\A\s*COVERAGE:\s*(YES|NO)\s*\n-{3,}\s*\n?", re.IGNORECASE)
+# answer_stream buffers deltas up to this many chars while waiting for the
+# header to resolve, well past its ~20-char expected length -- past that with
+# no match, it gives up and streams what's buffered (same fail-open as the
+# non-streaming path), so a header-less response still streams promptly
+# instead of silently waiting for the whole thing.
+_HEADER_BUFFER_CAP = 80
 
 SELECT_PROMPT = """\
 Here is the index of a personal research wiki. Each entry is a page with a
@@ -209,6 +217,36 @@ def _history_messages(history: list[dict] | None) -> list[dict]:
     return messages
 
 
+def _build_answer_messages(
+    question: str, stems: list[str], records: dict[str, dict], history: list[dict] | None
+) -> list[dict] | None:
+    """The messages for the answer call, or None if none of `stems` resolved
+    to a real record (shouldn't happen -- select_pages already validates
+    against records -- but Guard 1 covers it either way)."""
+    blocks = []
+    for stem in stems:
+        record = records.get(stem)
+        if record is None:
+            continue
+        blocks.append(f"### {stem}\n\n{page_body(record)}")
+    if not blocks:
+        return None
+
+    pages_text = "\n\n---\n\n".join(blocks)
+    user_content = f"Wiki pages:\n\n{pages_text}\n\n---\n\nQuestion: {question}"
+    return [
+        {"role": "system", "content": ANSWER_SYSTEM_PROMPT},
+        *_history_messages(history),
+        {"role": "user", "content": user_content},
+    ]
+
+
+EMPTY_RESPONSE_ANSWER = (
+    "The model returned an empty response. The pages below were "
+    "retrieved but not summarised -- try asking again."
+)
+
+
 async def answer(
     question: str,
     stems: list[str],
@@ -225,23 +263,10 @@ async def answer(
     if not stems:
         return NO_COVERAGE_ANSWER, [], False
 
-    blocks = []
-    for stem in stems:
-        record = records.get(stem)
-        if record is None:
-            continue
-        blocks.append(f"### {stem}\n\n{page_body(record)}")
-    if not blocks:
+    messages = _build_answer_messages(question, stems, records, history)
+    if messages is None:
         return NO_COVERAGE_ANSWER, [], False
 
-    pages_text = "\n\n---\n\n".join(blocks)
-    user_content = f"Wiki pages:\n\n{pages_text}\n\n---\n\nQuestion: {question}"
-
-    messages = [
-        {"role": "system", "content": ANSWER_SYSTEM_PROMPT},
-        *_history_messages(history),
-        {"role": "user", "content": user_content},
-    ]
     endpoint = resolve_stage("chat")
     result = await llm_switch.call(
         messages, endpoint.name, thinking=False, max_tokens=ANSWER_MAX_TOKENS
@@ -250,13 +275,88 @@ async def answer(
     did_answer, text = _split_coverage_header(result.text)
     if not text:
         # Empty response is a hiccup, not a coverage judgement.
-        text = (
-            "The model returned an empty response. The pages below were "
-            "retrieved but not summarised -- try asking again."
-        )
+        text = EMPTY_RESPONSE_ANSWER
         did_answer = True
 
     # cited_pages is the set actually sent, not scraped from prose -- but only
     # when the model says it used them.
     cited = [stem for stem in stems if stem in records] if did_answer else []
     return text, cited, did_answer
+
+
+async def answer_stream(
+    question: str,
+    stems: list[str],
+    records: dict[str, dict],
+    history: list[dict] | None = None,
+) -> AsyncIterator[dict]:
+    """Streaming counterpart to answer(). Yields, in order:
+      {"type": "coverage", "no_coverage": bool, "cited_pages": [...]} -- once,
+        before any text. Resolved instantly for Guard 1 (no pages); for
+        Guard 2, only once the COVERAGE header is seen or _HEADER_BUFFER_CAP
+        is hit, so the caller knows how to style the reply before any of it
+        is visible.
+      {"type": "delta", "text": "..."} -- zero or more, the answer itself,
+        with the COVERAGE header never included.
+      {"type": "done"} -- once, last.
+    """
+    if not stems:
+        yield {"type": "coverage", "no_coverage": True, "cited_pages": []}
+        yield {"type": "delta", "text": NO_COVERAGE_ANSWER}
+        yield {"type": "done"}
+        return
+
+    messages = _build_answer_messages(question, stems, records, history)
+    if messages is None:
+        yield {"type": "coverage", "no_coverage": True, "cited_pages": []}
+        yield {"type": "delta", "text": NO_COVERAGE_ANSWER}
+        yield {"type": "done"}
+        return
+
+    endpoint = resolve_stage("chat")
+
+    buffer = ""
+    header_resolved = False
+    async for event in llm_switch.stream(
+        messages, endpoint.name, thinking=False, max_tokens=ANSWER_MAX_TOKENS
+    ):
+        if event.get("thinking"):
+            continue  # reasoning never reaches the caller
+        delta = event.get("delta")
+        if not delta:
+            continue
+
+        if header_resolved:
+            yield {"type": "delta", "text": delta}
+            continue
+
+        buffer += delta
+        match = _COVERAGE_HEADER_RE.match(buffer)
+        if match:
+            did_answer = match.group(1).upper() == "YES"
+            header_resolved = True
+            yield {
+                "type": "coverage",
+                "no_coverage": not did_answer,
+                "cited_pages": stems if did_answer else [],
+            }
+            remainder = buffer[match.end():]
+            if remainder:
+                yield {"type": "delta", "text": remainder}
+            buffer = ""
+        elif len(buffer) > _HEADER_BUFFER_CAP:
+            # Fail open, same as _split_coverage_header: no header showed up
+            # in a reasonable window, so treat everything buffered as a real
+            # answer and stop waiting.
+            header_resolved = True
+            yield {"type": "coverage", "no_coverage": False, "cited_pages": stems}
+            yield {"type": "delta", "text": buffer}
+            buffer = ""
+
+    if not header_resolved:
+        # Stream ended before ever resolving -- a short header-less reply, or
+        # a genuinely empty response. Fails open either way.
+        yield {"type": "coverage", "no_coverage": False, "cited_pages": stems}
+        yield {"type": "delta", "text": buffer if buffer else EMPTY_RESPONSE_ANSWER}
+
+    yield {"type": "done"}

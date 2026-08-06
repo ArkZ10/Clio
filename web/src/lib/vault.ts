@@ -153,6 +153,65 @@ export const postVaultChat = (body: {
   session_id?: number | null;
 }) => postJson<VaultChatResponse>("/vault/chat", body);
 
+/** Events from POST /vault/chat/stream, in order: one "selected" (page
+ *  selection is fast; sent immediately, before the slower answer call, so
+ *  there's something to show during the model's hidden reasoning phase),
+ *  one "start" (styling info, right before any text), any number of "delta"
+ *  (the answer, streamed), one "done" -- or "error" in place of the rest if
+ *  the LLM call fails after the response has already started (an HTTP
+ *  status can't change by then). */
+export type VaultChatStreamEvent =
+  | { type: "selected"; selected_pages: string[]; dropped_count: number }
+  | {
+      type: "start";
+      no_coverage: boolean;
+      cited_pages: string[];
+      selected_pages: string[];
+      dropped_count: number;
+    }
+  | { type: "delta"; text: string }
+  | { type: "done" }
+  | { type: "error"; detail: string };
+
+export async function* streamVaultChat(body: {
+  question: string;
+  page_context?: string | null;
+  session_id?: number | null;
+}): AsyncGenerator<VaultChatStreamEvent> {
+  const path = "/vault/chat/stream";
+  const res = await fetch(`${apiBase()}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw await toError(res, path);
+  if (!res.body) throw new Error(`${path} returned no response body`);
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      // SSE frames are separated by a blank line; the last split part is
+      // either empty or a not-yet-complete frame, so it's held for next read.
+      const frames = buffer.split("\n\n");
+      buffer = frames.pop() ?? "";
+      for (const frame of frames) {
+        const dataLine = frame.split("\n").find((line) => line.startsWith("data:"));
+        if (!dataLine) continue;
+        yield JSON.parse(dataLine.slice("data:".length).trim()) as VaultChatStreamEvent;
+      }
+    }
+  } finally {
+    // Ensures the connection closes promptly if the consumer stops
+    // iterating early (an in-band error, or the component unmounting).
+    reader.cancel().catch(() => {});
+  }
+}
+
 /** Which page's chat this is -- each surface keeps its own thread. */
 export type ChatSurfaceName = "home" | "library" | "vault";
 

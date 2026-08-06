@@ -17,7 +17,7 @@ import {
   deleteChatSession,
   fetchChatSession,
   fetchChatSessions,
-  postVaultChat,
+  streamVaultChat,
   type ChatSessionSummary,
   type ChatSurfaceName,
 } from "@/lib/vault";
@@ -80,6 +80,16 @@ export function ChatSurface({
   const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [busy, setBusy] = useState(false);
+  // True from submit until the "start" event names a message to stream into
+  // -- gates the "Searching..." spinner, which should disappear the moment
+  // there's an actual (even empty) assistant bubble to watch fill in.
+  const [awaitingFirstToken, setAwaitingFirstToken] = useState(false);
+  // How many pages selection found for the in-flight turn, from the
+  // "selected" event -- lets the spinner say something more specific than
+  // "Searching" during the model's hidden reasoning phase, which can run
+  // 10-25s with nothing else to show for it.
+  const [selectedCount, setSelectedCount] = useState<number | null>(null);
+  const [waitedMs, setWaitedMs] = useState(0);
   // Which conversation this is, and whether the initial resume-lookup is
   // still in flight (backend/chat_store.py).
   const [sessionId, setSessionId] = useState<number | null>(null);
@@ -144,6 +154,16 @@ export function ChatSurface({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy]);
 
+  // Ticks while waiting for the first token, so the spinner visibly counts
+  // up instead of sitting static for however long reasoning takes.
+  useEffect(() => {
+    if (!awaitingFirstToken) return;
+    const start = Date.now();
+    setWaitedMs(0);
+    const id = setInterval(() => setWaitedMs(Date.now() - start), 250);
+    return () => clearInterval(id);
+  }, [awaitingFirstToken]);
+
   useEffect(() => {
     if (!busy && !resolving) inputRef.current?.focus();
   }, [busy, resolving]);
@@ -207,8 +227,11 @@ export function ChatSurface({
 
     setMessages((prev) => [...prev, { id: nextId(), role: "user", text: value }]);
     setBusy(true);
+    setAwaitingFirstToken(true);
+    setSelectedCount(null);
 
     void (async () => {
+      let assistantId: string | null = null;
       try {
         let sid = sessionId;
         if (sid === null) {
@@ -217,30 +240,55 @@ export function ChatSurface({
           setSessionId(sid);
           setSessions(null); // invalidate the cached history list
         }
-        const res = await postVaultChat({
+
+        for await (const event of streamVaultChat({
           question: value,
           page_context: pageContext,
           session_id: sid,
-        });
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: nextId(),
-            role: "assistant",
-            text: res.answer,
-            citedPages: res.cited_pages,
-            selectedCount: res.selected_pages.length,
-            droppedCount: res.dropped_count,
-            noCoverage: res.no_coverage,
-          },
-        ]);
+        })) {
+          if (event.type === "selected") {
+            setSelectedCount(event.selected_pages.length);
+          } else if (event.type === "start") {
+            const id = nextId();
+            assistantId = id;
+            setAwaitingFirstToken(false);
+            setMessages((prev) => [
+              ...prev,
+              {
+                id,
+                role: "assistant",
+                text: "",
+                citedPages: event.cited_pages,
+                selectedCount: event.selected_pages.length,
+                droppedCount: event.dropped_count,
+                noCoverage: event.no_coverage,
+              },
+            ]);
+          } else if (event.type === "delta") {
+            const id = assistantId;
+            if (id) {
+              setMessages((prev) =>
+                prev.map((m) => (m.id === id ? { ...m, text: m.text + event.text } : m)),
+              );
+            }
+          } else if (event.type === "error") {
+            throw new Error(event.detail);
+          }
+        }
         setError(null);
       } catch (e) {
+        // A partial or never-started bubble from this turn shouldn't linger
+        // next to the error banner that now explains what happened.
+        if (assistantId) {
+          const id = assistantId;
+          setMessages((prev) => prev.filter((m) => m.id !== id || m.text));
+        }
         setError(
           e instanceof Error ? e.message : "Something went wrong. Please try again.",
         );
       } finally {
         setBusy(false);
+        setAwaitingFirstToken(false);
       }
     })();
   };
@@ -435,10 +483,21 @@ export function ChatSurface({
                 );
               })}
 
-              {busy && (
+              {awaitingFirstToken && (
                 <div className="flex items-center gap-2 pl-1 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Searching your wiki…
+                  {selectedCount ? (
+                    <span>
+                      Found {selectedCount} page{selectedCount === 1 ? "" : "s"}, thinking…
+                    </span>
+                  ) : (
+                    <span>Searching your wiki…</span>
+                  )}
+                  {waitedMs >= 1000 && (
+                    <span className="font-mono text-[11px] text-muted-foreground/70">
+                      {Math.floor(waitedMs / 1000)}s
+                    </span>
+                  )}
                 </div>
               )}
               <div ref={bottomRef} />
