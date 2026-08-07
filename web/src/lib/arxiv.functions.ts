@@ -8,6 +8,13 @@ export type ArxivPaper = {
   year: number;
   summary: string;
   pdfUrl: string;
+  /** arXiv subject classifications, e.g. "cs.LG" -- the primary one is
+   *  always included among these, arXiv doesn't list it separately. */
+  categories: string[];
+  /** Author-supplied note, e.g. "10 pages, accepted at NeurIPS 2026". */
+  comment: string | null;
+  journalRef: string | null;
+  doi: string | null;
 };
 
 export type ArxivSearchResult = {
@@ -82,6 +89,10 @@ export const searchArxiv = createServerFn({ method: "POST" })
       const authors = [...block.matchAll(/<name>([\s\S]*?)<\/name>/g)].map((m) =>
         decode(m[1] ?? ""),
       );
+      // `<category term="cs.LG" .../>` -- anchored on the literal "<category"
+      // so it doesn't also pick up "<arxiv:primary_category ...>", a
+      // different (self-closing, no separate value needed) element.
+      const categories = [...block.matchAll(/<category\s+term="([^"]+)"/g)].map((m) => m[1]!);
       return {
         id: idMatch?.[1] ?? rawId,
         title: pick(block, "title"),
@@ -89,6 +100,10 @@ export const searchArxiv = createServerFn({ method: "POST" })
         year: Number(published.slice(0, 4)) || new Date().getFullYear(),
         summary: pick(block, "summary"),
         pdfUrl: rawId.replace("/abs/", "/pdf/"),
+        categories,
+        comment: pick(block, "arxiv:comment") || null,
+        journalRef: pick(block, "arxiv:journal_ref") || null,
+        doi: pick(block, "arxiv:doi") || null,
       };
     });
 

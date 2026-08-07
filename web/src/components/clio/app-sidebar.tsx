@@ -59,11 +59,8 @@ export function AppSidebar() {
               : "text-muted-foreground hover:bg-secondary/40 hover:text-sidebar-foreground",
           )}
         >
-          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
-            AR
-          </span>
-          <span className="min-w-0 flex-1 truncate">Ada Reyes</span>
-          <Settings className="h-4 w-4 shrink-0" />
+          <Settings className="h-4.5 w-4.5 shrink-0" />
+          <span className="min-w-0 flex-1 truncate">Settings</span>
         </Link>
       </div>
     </aside>
