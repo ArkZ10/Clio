@@ -11,6 +11,15 @@ export type ArxivPaper = {
   score: number;
 };
 
+export type ArxivSearchResult = {
+  papers: ArxivPaper[];
+  /** From the feed's <opensearch:totalResults> -- how many papers match the
+   *  query in total, not just this page. Drives the page count in the UI. */
+  totalResults: number;
+  start: number;
+  pageSize: number;
+};
+
 const decode = (s: string) =>
   s
     .replace(/&lt;/g, "<")
@@ -27,24 +36,37 @@ const pick = (block: string, tag: string) => {
 };
 
 export const searchArxiv = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => z.object({ query: z.string().min(1) }).parse(input))
-  .handler(async ({ data }): Promise<ArxivPaper[]> => {
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        query: z.string().min(1),
+        start: z.number().int().min(0).default(0),
+        maxResults: z.number().int().min(1).max(50).default(10),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }): Promise<ArxivSearchResult> => {
     const url = `https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(
       data.query,
-    )}&start=0&max_results=10&sortBy=relevance`;
+    )}&start=${data.start}&max_results=${data.maxResults}&sortBy=relevance`;
 
     const res = await fetch(url);
     if (!res.ok) throw new Error("arXiv search failed");
     const xml = await res.text();
 
+    const totalResults = Number(pick(xml, "opensearch:totalResults")) || 0;
+
     const entries = xml.split("<entry>").slice(1);
-    return entries.map((block, i) => {
+    const papers = entries.map((block, i) => {
       const rawId = pick(block, "id");
       const idMatch = rawId.match(/abs\/([^v]+)(v\d+)?/);
       const published = pick(block, "published");
       const authors = [...block.matchAll(/<name>([\s\S]*?)<\/name>/g)].map((m) =>
         decode(m[1] ?? ""),
       );
+      // Rank (and its score falloff) is absolute across pages, not per-page,
+      // so #11 on page 2 doesn't restart at the same score as #1 on page 1.
+      const rank = data.start + i;
       return {
         id: idMatch?.[1] ?? rawId,
         title: pick(block, "title"),
@@ -52,7 +74,9 @@ export const searchArxiv = createServerFn({ method: "POST" })
         year: Number(published.slice(0, 4)) || new Date().getFullYear(),
         summary: pick(block, "summary"),
         pdfUrl: rawId.replace("/abs/", "/pdf/"),
-        score: Math.max(0.4, Number((0.98 - i * 0.045).toFixed(2))),
+        score: Math.max(0.4, Number((0.98 - rank * 0.045).toFixed(2))),
       };
     });
+
+    return { papers, totalResults, start: data.start, pageSize: data.maxResults };
   });
