@@ -8,9 +8,11 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  FileText,
   Search,
+  X,
 } from "lucide-react";
-import { ARXIV_FOUNDING_YEAR, searchArxiv } from "@/lib/arxiv.functions";
+import { ARXIV_FOUNDING_YEAR, searchArxiv, type ArxivPaper } from "@/lib/arxiv.functions";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -60,6 +62,9 @@ function ExplorePage() {
   const [fromYear, setFromYear] = useState<number | null>(null);
   const [toYear, setToYear] = useState<number | null>(null);
   const [saved, setSaved] = useState<string[]>([]);
+  // Set by "Open PDF" -- switches into the split list+viewer layout, same
+  // pattern as /library. Cleared by the viewer's close button.
+  const [viewingPaper, setViewingPaper] = useState<ArxivPaper | null>(null);
   const run = useServerFn(searchArxiv);
   const resultsTopRef = useRef<HTMLDivElement>(null);
 
@@ -97,13 +102,17 @@ function ExplorePage() {
     setPage(1);
   };
 
+  const toggleSaved = (id: string) => {
+    setSaved((s) => (s.includes(id) ? s : [...s, id]));
+  };
+
   const results = search.data?.papers ?? [];
   const totalResults = search.data?.totalResults ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalResults / PAGE_SIZE));
 
   return (
-    <div className="h-full min-h-0 overflow-y-auto">
-      <div className="mx-auto w-full max-w-3xl px-5 py-10">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="mx-auto w-full max-w-3xl px-5 pt-10">
         <div ref={resultsTopRef} />
         <h1 className="text-center text-2xl font-semibold tracking-tight">
           What do you want to explore?
@@ -177,120 +186,231 @@ function ExplorePage() {
             </SelectContent>
           </Select>
         </div>
+      </div>
 
-        <div className="mt-10">
-          {activeQuery === null && (
-            <div className="py-8 text-center">
+      <div className="mt-6 min-h-0 flex-1 overflow-hidden px-5 pb-10">
+        {activeQuery === null && (
+          <div className="mx-auto max-w-3xl py-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              Start with a topic, a method, or an open question.
+            </p>
+            <ExampleButtons onPick={submit} />
+          </div>
+        )}
+
+        {activeQuery !== null && search.isPending && (
+          <div className="mx-auto max-w-3xl">
+            <SkeletonList />
+          </div>
+        )}
+
+        {activeQuery !== null && !search.isPending && search.isError && (
+          <p className="mx-auto max-w-3xl rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            arXiv search failed. Please try again in a moment.
+          </p>
+        )}
+
+        {activeQuery !== null &&
+          !search.isPending &&
+          !search.isError &&
+          results.length === 0 && (
+            <div className="mx-auto max-w-3xl py-8 text-center">
               <p className="text-sm text-muted-foreground">
-                Start with a topic, a method, or an open question.
+                No papers matched that query. Try broader terms.
               </p>
               <ExampleButtons onPick={submit} />
             </div>
           )}
 
-          {activeQuery !== null && search.isPending && <SkeletonList />}
-
-          {activeQuery !== null && !search.isPending && search.isError && (
-            <p className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              arXiv search failed. Please try again in a moment.
+        {results.length > 0 && viewingPaper === null && (
+          <div className="mx-auto h-full max-w-3xl overflow-y-auto">
+            <p className="mb-3 text-xs text-muted-foreground">
+              {totalResults.toLocaleString()} result{totalResults === 1 ? "" : "s"}
             </p>
-          )}
-
-          {activeQuery !== null &&
-            !search.isPending &&
-            !search.isError &&
-            results.length === 0 && (
-              <div className="py-8 text-center">
-                <p className="text-sm text-muted-foreground">
-                  No papers matched that query. Try broader terms.
-                </p>
-                <ExampleButtons onPick={submit} />
-              </div>
-            )}
-
-          {results.length > 0 && (
-            <>
-              <p className="mb-3 text-xs text-muted-foreground">
-                {totalResults.toLocaleString()} result{totalResults === 1 ? "" : "s"}
-              </p>
-              <div className="space-y-3">
-                {results.map((p, i) => (
-                  <article
-                    key={p.id + i}
-                    className="group rounded-xl border border-border bg-surface p-4 transition-colors hover:border-secondary"
-                  >
-                    <div className="flex gap-4">
-                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-                        {(page - 1) * PAGE_SIZE + i + 1}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <h2 className="text-sm font-semibold text-foreground">{p.title}</h2>
-                        <p className="mt-1 truncate text-xs text-muted-foreground">
-                          {p.authors.slice(0, 4).join(", ")}
-                          {p.authors.length > 4 ? " et al." : ""} · {p.year} · arXiv:{p.id}
-                        </p>
-                        <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-foreground/80">
-                          {p.summary}
-                        </p>
-                        <div className="mt-3 hidden flex-wrap gap-2 group-focus-within:flex group-hover:flex max-md:flex">
-                          <button
-                            onClick={() =>
-                              setSaved((s) => (s.includes(p.id) ? s : [...s, p.id]))
-                            }
-                            className={cn(
-                              "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                              saved.includes(p.id)
-                                ? "bg-secondary text-secondary-foreground"
-                                : "bg-primary text-primary-foreground hover:opacity-90",
-                            )}
-                          >
-                            {saved.includes(p.id) ? (
-                              <Check className="h-3.5 w-3.5" />
-                            ) : (
-                              <BookmarkPlus className="h-3.5 w-3.5" />
-                            )}
-                            {saved.includes(p.id) ? "Saved" : "Save to Library"}
-                          </button>
-                          <a
-                            href={p.pdfUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center gap-1.5 rounded-lg border border-border bg-elevated px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                            Open PDF
-                          </a>
-                        </div>
+            <div className="space-y-3">
+              {results.map((p, i) => (
+                <article
+                  key={p.id + i}
+                  className="group rounded-xl border border-border bg-surface p-4 transition-colors hover:border-secondary"
+                >
+                  <div className="flex gap-4">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                      {(page - 1) * PAGE_SIZE + i + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-sm font-semibold text-foreground">{p.title}</h2>
+                      <p className="mt-1 truncate text-xs text-muted-foreground">
+                        {p.authors.slice(0, 4).join(", ")}
+                        {p.authors.length > 4 ? " et al." : ""} · {p.year} · arXiv:{p.id}
+                      </p>
+                      <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-foreground/80">
+                        {p.summary}
+                      </p>
+                      <div className="mt-3 hidden flex-wrap gap-2 group-focus-within:flex group-hover:flex max-md:flex">
+                        <button
+                          onClick={() => toggleSaved(p.id)}
+                          className={cn(
+                            "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                            saved.includes(p.id)
+                              ? "bg-secondary text-secondary-foreground"
+                              : "bg-primary text-primary-foreground hover:opacity-90",
+                          )}
+                        >
+                          {saved.includes(p.id) ? (
+                            <Check className="h-3.5 w-3.5" />
+                          ) : (
+                            <BookmarkPlus className="h-3.5 w-3.5" />
+                          )}
+                          {saved.includes(p.id) ? "Saved" : "Save to Library"}
+                        </button>
+                        <button
+                          onClick={() => setViewingPaper(p)}
+                          className="flex items-center gap-1.5 rounded-lg border border-border bg-elevated px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                          Open PDF
+                        </button>
                       </div>
                     </div>
-                  </article>
-                ))}
-              </div>
+                  </div>
+                </article>
+              ))}
+            </div>
 
-              <div className="mt-6 flex items-center justify-between gap-3">
+            <div className="mt-6 flex items-center justify-between gap-3">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1 || search.isFetching}
+                className="flex items-center gap-1.5 rounded-lg border border-border bg-elevated px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                Prev
+              </button>
+              <p className="text-xs text-muted-foreground">
+                Page {page} of {totalPages.toLocaleString()}
+              </p>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages || search.isFetching}
+                className="flex items-center gap-1.5 rounded-lg border border-border bg-elevated px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+              >
+                Next
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {results.length > 0 && viewingPaper !== null && (
+          <div className="flex h-full min-h-0 gap-4">
+            {/* List pane */}
+            <div className="flex min-h-0 w-full max-w-sm flex-col gap-2 overflow-y-auto rounded-xl border border-border bg-surface p-3">
+              <p className="px-1 text-xs text-muted-foreground">
+                {totalResults.toLocaleString()} result{totalResults === 1 ? "" : "s"}
+              </p>
+              {results.map((p, i) => (
+                <div
+                  key={p.id + i}
+                  className={cn(
+                    "rounded-lg border p-3 transition-colors",
+                    p.id === viewingPaper.id
+                      ? "border-primary/70 bg-elevated"
+                      : "border-transparent hover:bg-elevated/60",
+                  )}
+                >
+                  <h2 className="text-sm font-medium text-foreground">{p.title}</h2>
+                  <p className="mt-1 truncate text-xs text-muted-foreground">
+                    {p.authors.slice(0, 3).join(", ")}
+                    {p.authors.length > 3 ? " et al." : ""} · {p.year}
+                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <button
+                      onClick={() => setViewingPaper(p)}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition-colors",
+                        p.id === viewingPaper.id
+                          ? "border-border bg-background text-foreground"
+                          : "border-border bg-elevated text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      PDF
+                    </button>
+                    <button
+                      onClick={() => toggleSaved(p.id)}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition-colors",
+                        saved.includes(p.id)
+                          ? "border-transparent bg-secondary text-secondary-foreground"
+                          : "border-border bg-elevated text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {saved.includes(p.id) ? (
+                        <Check className="h-3.5 w-3.5" />
+                      ) : (
+                        <BookmarkPlus className="h-3.5 w-3.5" />
+                      )}
+                      {saved.includes(p.id) ? "Saved" : "Save"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              <div className="mt-1 flex items-center justify-between gap-2 px-1 pt-1">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1 || search.isFetching}
-                  className="flex items-center gap-1.5 rounded-lg border border-border bg-elevated px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+                  className="flex items-center gap-1 rounded-lg border border-border bg-elevated px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
                 >
-                  <ChevronLeft className="h-3.5 w-3.5" />
+                  <ChevronLeft className="h-3 w-3" />
                   Prev
                 </button>
-                <p className="text-xs text-muted-foreground">
-                  Page {page} of {totalPages.toLocaleString()}
+                <p className="text-[11px] text-muted-foreground">
+                  {page} / {totalPages.toLocaleString()}
                 </p>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages || search.isFetching}
-                  className="flex items-center gap-1.5 rounded-lg border border-border bg-elevated px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+                  className="flex items-center gap-1 rounded-lg border border-border bg-elevated px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
                 >
                   Next
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  <ChevronRight className="h-3 w-3" />
                 </button>
               </div>
-            </>
-          )}
-        </div>
+            </div>
+
+            {/* Viewer pane */}
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-surface">
+              <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2.5">
+                <p className="truncate text-xs text-muted-foreground">{viewingPaper.title}</p>
+                <div className="flex shrink-0 items-center gap-2">
+                  <a
+                    href={viewingPaper.pdfUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Open in new tab
+                  </a>
+                  <button
+                    onClick={() => setViewingPaper(null)}
+                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-elevated hover:text-foreground"
+                    aria-label="Close PDF"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              <iframe
+                key={viewingPaper.id}
+                src={viewingPaper.pdfUrl}
+                title={`PDF: ${viewingPaper.title}`}
+                className="min-h-0 flex-1"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
