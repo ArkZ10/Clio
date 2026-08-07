@@ -17,6 +17,11 @@ import {
   type LlmEndpoint,
 } from "@/lib/settings";
 
+// Chat is the only stage this app calls live -- rerank/extract/synthesis
+// only run from offline scripts/, so routing for them isn't shown here.
+// The backend still accepts overrides for all four; this is UI-only.
+const VISIBLE_STAGES = ["chat"] as const satisfies readonly (typeof STAGES)[number][];
+
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
@@ -337,7 +342,7 @@ function SettingsPage() {
         <section>
           <h2 className="text-sm font-medium text-foreground">Which model does what</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Chat is the only stage live in this app -- the rest run offline, from scripts/.
+            Pick which endpoint answers chat.
           </p>
 
           {routingQuery.isPending && (
@@ -345,7 +350,7 @@ function SettingsPage() {
           )}
 
           <div className="mt-4 space-y-2">
-            {STAGES.map((stage) => {
+            {VISIBLE_STAGES.map((stage) => {
               const row = routing.find((r) => r.stage === stage);
               return (
                 <div
