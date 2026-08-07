@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { AlertTriangle, Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   deleteEndpoint,
   fetchEndpoints,
@@ -209,19 +210,21 @@ function SettingsPage() {
                   />
                 </Field>
                 <Field label="Kind">
-                  <select
+                  <Select
                     value={form.kind}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, kind: e.target.value as EndpointKind }))
-                    }
-                    className="w-full rounded-lg border border-border bg-elevated px-3 py-2 text-sm outline-none focus:border-primary"
+                    onValueChange={(v) => setForm((f) => ({ ...f, kind: v as EndpointKind }))}
                   >
-                    {(Object.keys(KIND_LABELS) as EndpointKind[]).map((k) => (
-                      <option key={k} value={k}>
-                        {KIND_LABELS[k]}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full rounded-lg border-border bg-elevated text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(KIND_LABELS) as EndpointKind[]).map((k) => (
+                        <SelectItem key={k} value={k}>
+                          {KIND_LABELS[k]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </Field>
                 <Field label="Default model">
                   <input
@@ -359,20 +362,25 @@ function SettingsPage() {
                         Reset to default
                       </button>
                     )}
-                    <select
-                      value={row?.endpoint_name ?? ""}
-                      onChange={(e) =>
-                        routeMutation.mutate({ stage, endpointName: e.target.value })
-                      }
+                    <Select
+                      {...(row ? { value: row.endpoint_name } : {})}
+                      onValueChange={(v) => routeMutation.mutate({ stage, endpointName: v })}
                       disabled={endpoints.length === 0}
-                      className="rounded-lg border border-border bg-elevated px-2.5 py-1.5 text-xs outline-none focus:border-primary disabled:opacity-60"
                     >
-                      {endpoints.map((endpoint) => (
-                        <option key={endpoint.name} value={endpoint.name}>
-                          {endpoint.name}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger
+                        aria-label={`${STAGE_LABELS[stage]} endpoint`}
+                        className="h-auto w-auto gap-1.5 rounded-lg border-border bg-elevated px-2.5 py-1.5 text-xs"
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {endpoints.map((endpoint) => (
+                          <SelectItem key={endpoint.name} value={endpoint.name}>
+                            {endpoint.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               );

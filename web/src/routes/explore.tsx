@@ -10,8 +10,9 @@ import {
   ExternalLink,
   Search,
 } from "lucide-react";
-import { searchArxiv } from "@/lib/arxiv.functions";
+import { ARXIV_FOUNDING_YEAR, searchArxiv } from "@/lib/arxiv.functions";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/explore")({
   head: () => ({
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/explore")({
       {
         name: "description",
         content:
-          "Search arXiv from Clio and get a ranked list of relevant papers with abstracts, relevance scores, and one-click saving.",
+          "Search arXiv from Clio and get a list of relevant papers with abstracts and one-click saving.",
       },
       { property: "og:title", content: "Explore — Discover arXiv papers with Clio" },
       {
@@ -40,6 +41,11 @@ const EXAMPLES = [
 ];
 
 const PAGE_SIZE = 10;
+const CURRENT_YEAR = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from(
+  { length: CURRENT_YEAR - ARXIV_FOUNDING_YEAR + 1 },
+  (_, i) => CURRENT_YEAR - i,
+);
 
 function ExplorePage() {
   const [query, setQuery] = useState("");
@@ -48,18 +54,36 @@ function ExplorePage() {
   // current results.
   const [activeQuery, setActiveQuery] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  // Unlike the query text, a year filter change applies immediately (no
+  // separate "submit" step) -- it's a bounded dropdown pick, not something
+  // you're mid-typing.
+  const [fromYear, setFromYear] = useState<number | null>(null);
+  const [toYear, setToYear] = useState<number | null>(null);
   const [saved, setSaved] = useState<string[]>([]);
   const run = useServerFn(searchArxiv);
   const resultsTopRef = useRef<HTMLDivElement>(null);
 
   const search = useQuery({
-    queryKey: ["explore", activeQuery, page],
+    queryKey: ["explore", activeQuery, page, fromYear, toYear],
     queryFn: () =>
       run({
-        data: { query: activeQuery!, start: (page - 1) * PAGE_SIZE, maxResults: PAGE_SIZE },
+        data: {
+          query: activeQuery!,
+          start: (page - 1) * PAGE_SIZE,
+          maxResults: PAGE_SIZE,
+          fromYear: fromYear ?? undefined,
+          toYear: toYear ?? undefined,
+        },
       }),
     enabled: activeQuery !== null,
   });
+
+  const applyYearFilter = (bound: "from" | "to", value: string) => {
+    const year = value === "any" ? null : Number(value);
+    if (bound === "from") setFromYear(year);
+    else setToYear(year);
+    setPage(1);
+  };
 
   useEffect(() => {
     resultsTopRef.current?.scrollIntoView({ block: "start" });
@@ -85,7 +109,7 @@ function ExplorePage() {
           What do you want to explore?
         </h1>
         <p className="mt-2 text-center text-sm text-muted-foreground">
-          Search arXiv and rank results by relevance to your question.
+          Search arXiv, sorted by relevance to your question.
         </p>
 
         <form
@@ -110,6 +134,49 @@ function ExplorePage() {
             <span className="hidden sm:inline">Search</span>
           </button>
         </form>
+
+        <div className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+          <span>Year</span>
+          <Select
+            value={fromYear !== null ? String(fromYear) : "any"}
+            onValueChange={(v) => applyYearFilter("from", v)}
+          >
+            <SelectTrigger
+              aria-label="From year"
+              className="h-auto w-auto gap-1.5 rounded-lg border-border bg-elevated px-2.5 py-1.5 text-xs"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any">Any</SelectItem>
+              {YEAR_OPTIONS.map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  {y}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span>to</span>
+          <Select
+            value={toYear !== null ? String(toYear) : "any"}
+            onValueChange={(v) => applyYearFilter("to", v)}
+          >
+            <SelectTrigger
+              aria-label="To year"
+              className="h-auto w-auto gap-1.5 rounded-lg border-border bg-elevated px-2.5 py-1.5 text-xs"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any">Any</SelectItem>
+              {YEAR_OPTIONS.map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  {y}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <div className="mt-10">
           {activeQuery === null && (
@@ -157,14 +224,7 @@ function ExplorePage() {
                         {(page - 1) * PAGE_SIZE + i + 1}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          <h2 className="min-w-0 flex-1 text-sm font-semibold text-foreground">
-                            {p.title}
-                          </h2>
-                          <span className="shrink-0 rounded-full border border-secondary/60 bg-elevated px-2 py-0.5 text-[11px] text-muted-foreground">
-                            {(p.score * 100).toFixed(0)}% match
-                          </span>
-                        </div>
+                        <h2 className="text-sm font-semibold text-foreground">{p.title}</h2>
                         <p className="mt-1 truncate text-xs text-muted-foreground">
                           {p.authors.slice(0, 4).join(", ")}
                           {p.authors.length > 4 ? " et al." : ""} · {p.year} · arXiv:{p.id}
