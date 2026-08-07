@@ -9,7 +9,6 @@ from backend import routing_store
 
 
 class Stage(str, Enum):
-    CLUSTER_LABEL = "cluster_label"
     RERANK = "rerank"
     EXTRACT = "extract"
     SYNTHESIS = "synthesis"
@@ -17,9 +16,8 @@ class Stage(str, Enum):
 
 
 DEFAULT_ROUTES: dict[str, str] = {
-    # All five route to deepseek for now; each entry is independent and can
+    # All four route to deepseek for now; each entry is independent and can
     # be repointed on its own. "nvidia" stays registered as a fallback.
-    Stage.CLUSTER_LABEL.value: "deepseek",
     Stage.RERANK.value: "deepseek",
     Stage.EXTRACT.value: "deepseek",
     Stage.SYNTHESIS.value: "deepseek",

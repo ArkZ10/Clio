@@ -34,14 +34,13 @@ export const saveEndpoint = (body: {
 export const deleteEndpoint = (name: string) =>
   deleteJson<{ ok: boolean }>(`/settings/endpoints/${encodeURIComponent(name)}`);
 
-/** The five pipeline stages, in the order the Settings page shows them --
+/** The four pipeline stages, in the order the Settings page shows them --
  *  chat first since it's the only one live in the web app. */
-export const STAGES = ["chat", "cluster_label", "rerank", "extract", "synthesis"] as const;
+export const STAGES = ["chat", "rerank", "extract", "synthesis"] as const;
 export type Stage = (typeof STAGES)[number];
 
 export const STAGE_LABELS: Record<Stage, string> = {
   chat: "Chat",
-  cluster_label: "Cluster labeling",
   rerank: "Rerank",
   extract: "Extraction",
   synthesis: "Synthesis",

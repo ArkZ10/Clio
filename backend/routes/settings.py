@@ -11,7 +11,7 @@ from backend import llm_settings, routing, routing_store
 
 router = APIRouter()
 
-STAGES = ("chat", "cluster_label", "rerank", "extract", "synthesis")
+STAGES = ("chat", "rerank", "extract", "synthesis")
 
 
 class CreateEndpointRequest(BaseModel):

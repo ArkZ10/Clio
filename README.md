@@ -66,5 +66,4 @@ Pipeline steps run as scripts against the same venv, for example:
 
 ```bash
 ./venv/bin/python scripts/build_graph.py
-./venv/bin/python scripts/label_clusters.py
 ```

@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT))
 import dotenv
 
 # rerank routes to deepseek -- load .env so DEEPSEEK_API_KEY resolves
-# regardless of the calling shell (same pattern as label_clusters.py).
+# regardless of the calling shell.
 dotenv.load_dotenv(ROOT / ".env")
 
 from backend.explore.rerank import rerank
