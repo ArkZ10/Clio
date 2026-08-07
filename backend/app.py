@@ -6,6 +6,7 @@ from backend.routes.library import router as library_router
 from backend.routes.explore import router as explore_router
 from backend.routes.vault import router as vault_router
 from backend.routes.chat import router as chat_router
+from backend.routes.settings import router as settings_router
 
 app = FastAPI(title="Clio")
 
@@ -20,6 +21,7 @@ app.include_router(library_router)
 app.include_router(explore_router)
 app.include_router(vault_router)
 app.include_router(chat_router)
+app.include_router(settings_router)
 
 
 @app.on_event("startup")

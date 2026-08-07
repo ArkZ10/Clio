@@ -143,6 +143,16 @@ def init_db(db_path):
         "CREATE INDEX IF NOT EXISTS idx_chat_message_session ON chat_message(session_id)"
     )
 
+    # Per-stage routing overrides (backend/routing_store.py). Absence of a row
+    # for a stage means "use routing.DEFAULT_ROUTES", not "unrouted".
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS stage_route (
+            stage TEXT PRIMARY KEY,
+            endpoint_name TEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     db.commit()
     db.close()
 

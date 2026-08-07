@@ -5,6 +5,7 @@ no env-var override, just this table.
 from enum import Enum
 
 import llm_switch
+from backend import routing_store
 
 
 class Stage(str, Enum):
@@ -27,13 +28,15 @@ DEFAULT_ROUTES: dict[str, str] = {
 
 
 def route_name(stage: str) -> str:
-    """The endpoint name a stage routes to. No llm_switch lookup -- just the
-    table, so this works without any endpoint registered."""
+    """The endpoint name a stage routes to: a persisted override
+    (backend/routing_store.py) if one's been set via Settings, else
+    DEFAULT_ROUTES. No llm_switch lookup -- just the table/DB, so this works
+    without any endpoint registered."""
     if stage not in DEFAULT_ROUTES:
         raise ValueError(
             f"Unknown stage: {stage!r}. Valid stages: {sorted(DEFAULT_ROUTES)}"
         )
-    return DEFAULT_ROUTES[stage]
+    return routing_store.get_override(stage) or DEFAULT_ROUTES[stage]
 
 
 def resolve_stage(stage: str):
