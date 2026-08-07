@@ -1,5 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { ChatSurface } from "@/components/clio/chat-surface";
+import { fetchVaultGraph } from "@/lib/vault";
+import { makeStemResolver } from "@/lib/wiki-links";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,6 +25,30 @@ export const Route = createFileRoute("/")({
 });
 
 function ChatPage() {
+  const navigate = useNavigate();
+
+  // / has no page viewer of its own, so a citation or inline [[wikilink]]
+  // navigates to /vault instead of opening in place there -- same pattern as
+  // library.tsx, just loaded here purely to resolve/label links rather than
+  // to render anything with it directly.
+  const graphQuery = useQuery({
+    queryKey: ["vault", "graph"],
+    queryFn: fetchVaultGraph,
+  });
+
+  const nodeByStem = useMemo(() => {
+    const map = new Map<string, { title: string; category: string }>();
+    for (const n of graphQuery.data?.nodes ?? []) {
+      map.set(n.id, { title: n.title, category: n.category });
+    }
+    return map;
+  }, [graphQuery.data]);
+
+  const resolveStem = useMemo(
+    () => makeStemResolver(nodeByStem.keys()),
+    [nodeByStem],
+  );
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <header className="border-b border-border px-6 py-4">
@@ -36,6 +64,11 @@ function ChatPage() {
             "What open questions am I tracking?",
           ]}
           emptySubtitle="Answers come only from your wiki. If a topic isn't in there, Clio will say so rather than guess."
+          resolvePage={(stem) => nodeByStem.get(stem)}
+          resolveStem={resolveStem}
+          onCitationClick={(stem) => {
+            void navigate({ to: "/vault", search: { page: stem } });
+          }}
         />
       </div>
     </div>

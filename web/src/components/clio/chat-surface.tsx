@@ -37,6 +37,30 @@ type ChatMessage = {
 let messageSeq = 0;
 const nextId = () => `m${++messageSeq}`;
 
+const LAST_SESSION_PREFIX = "clio:chat:lastSession:";
+
+function lastSessionKey(surface: ChatSurfaceName, pageContext: string | null): string {
+  return `${LAST_SESSION_PREFIX}${surface}:${pageContext ?? ""}`;
+}
+
+function readLastSessionId(surface: ChatSurfaceName, pageContext: string | null): number | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(lastSessionKey(surface, pageContext));
+  const id = raw ? Number(raw) : NaN;
+  return Number.isFinite(id) ? id : null;
+}
+
+function writeLastSessionId(
+  surface: ChatSurfaceName,
+  pageContext: string | null,
+  id: number | null,
+): void {
+  if (typeof window === "undefined") return;
+  const key = lastSessionKey(surface, pageContext);
+  if (id === null) window.localStorage.removeItem(key);
+  else window.localStorage.setItem(key, String(id));
+}
+
 /** sqlite's CURRENT_TIMESTAMP is UTC but not ISO -- fix that up first. */
 function relativeTime(sqliteTimestamp: string): string {
   const then = new Date(sqliteTimestamp.replace(" ", "T") + "Z").getTime();
@@ -106,8 +130,9 @@ export function ChatSurface({
     [resolveStem, onCitationClick],
   );
 
-  // Resume the most recent session for this (surface, pageContext) bucket on
-  // mount and whenever pageContext changes.
+  // Resume, on mount and whenever pageContext changes: the specific session
+  // last opened for this bucket if one's remembered (and still exists),
+  // else the most recently updated one for this bucket.
   useEffect(() => {
     let cancelled = false;
     setResolving(true);
@@ -119,7 +144,9 @@ export function ChatSurface({
     void (async () => {
       try {
         const { sessions: list } = await fetchChatSessions(surface);
-        const match = list.find((s) => s.page_context === pageContext);
+        const remembered = readLastSessionId(surface, pageContext);
+        const match =
+          list.find((s) => s.id === remembered) ?? list.find((s) => s.page_context === pageContext);
         if (!match) {
           if (!cancelled) setResolving(false);
           return;
@@ -189,6 +216,7 @@ export function ChatSurface({
     void fetchChatSession(id)
       .then((detail) => {
         setSessionId(detail.id);
+        writeLastSessionId(surface, pageContext, detail.id);
         setMessages(
           detail.messages.map((m) => ({
             id: nextId(),
@@ -216,6 +244,11 @@ export function ChatSurface({
     void deleteChatSession(id).then(() => {
       setSessions((prev) => prev?.filter((s) => s.id !== id) ?? null);
       if (id === sessionId) startNewChat();
+      // Don't leave a deleted session remembered -- next resume would either
+      // 404 or (worse) silently fall through to a stale match.
+      if (readLastSessionId(surface, pageContext) === id) {
+        writeLastSessionId(surface, pageContext, null);
+      }
     });
   };
 
@@ -238,6 +271,7 @@ export function ChatSurface({
           const created = await createChatSession(surface, pageContext);
           sid = created.id;
           setSessionId(sid);
+          writeLastSessionId(surface, pageContext, sid);
           setSessions(null); // invalidate the cached history list
         }
 
