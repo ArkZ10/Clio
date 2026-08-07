@@ -38,6 +38,17 @@ of papers.
 
 ## Running
 
+### Both at once
+
+```bash
+./run.sh
+```
+
+Runs backend and frontend together, output prefixed `[backend]` / `[web]`. Ctrl-C
+stops both. Assumes both are already set up per their own sections below (`./venv`
+and `web/node_modules` in place, `.env` files populated) — it's a convenience
+wrapper around the two commands below, not a setup script.
+
 ### Backend (FastAPI, port 8000)
 
 ```bash
