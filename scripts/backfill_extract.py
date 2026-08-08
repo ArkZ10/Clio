@@ -30,7 +30,7 @@ def _select_backfill_set(cur):
         """
     )
     rows = cur.fetchall()
-    # filter to pdf_paths that actually resolve to a file on disk
+
     targets = [(pid, Path(pp)) for pid, pp in rows if Path(pp).exists()]
     missing = [(pid, pp) for pid, pp in rows if not Path(pp).exists()]
     return targets, missing

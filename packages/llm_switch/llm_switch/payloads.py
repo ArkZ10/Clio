@@ -6,8 +6,6 @@ import re
 from typing import Any, Optional
 
 _THINK_RE = re.compile(r"<think>(.*?)</think>", re.DOTALL)
-# Some chat templates (Qwen3 via Ollama) pre-seed the opening <think> tag in
-# the prompt, so only the closing tag reaches the API response.
 _LONE_CLOSE_THINK_RE = re.compile(r"\A(.*?)</think>\s*", re.DOTALL)
 
 
