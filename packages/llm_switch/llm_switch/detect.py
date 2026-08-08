@@ -14,8 +14,7 @@ _PRIVATE_NETWORKS = (
     ipaddress.ip_network("172.16.0.0/12"),
     ipaddress.ip_network("192.168.0.0/16"),
 )
-# Tailscale uses the CGNAT range 100.64.0.0/10, NOT all of 100.0.0.0/8 --
-# a bare "100." prefix would misclassify public addresses outside that block.
+
 _TAILSCALE_CGNAT = ipaddress.ip_network("100.64.0.0/10")
 
 
