@@ -49,6 +49,7 @@ async def get_vault_graph():
     return {
         "nodes": graph["nodes"],
         "links": graph["links"],
+        "unresolved": graph["unresolved"],
         "categories": list(CATEGORIES),
         "stats": graph_stats(graph),
     }

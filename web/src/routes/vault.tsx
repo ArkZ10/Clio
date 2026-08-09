@@ -54,6 +54,7 @@ function VaultPage() {
   const { page: initialPage } = Route.useSearch();
   const [selectedStem, setSelectedStem] = useState<string | null>(initialPage ?? null);
   const [chatOpen, setChatOpen] = useState(false);
+  const [unresolvedOpen, setUnresolvedOpen] = useState(false);
   // Captured when chat opens, held apart from selectedStem so browsing to
   // another page mid-conversation doesn't change what it's anchored to.
   const [chatContext, setChatContext] = useState<string | null>(null);
@@ -102,6 +103,19 @@ function VaultPage() {
 
   const stats = graph?.stats;
 
+  // Groups broken [[links]] by the page that contains them, so the popover
+  // reads as "these pages have a dangling link" rather than a flat list of
+  // (source, target) pairs.
+  const unresolvedBySource = useMemo(() => {
+    const bySource = new Map<string, string[]>();
+    for (const { source, target } of graph?.unresolved ?? []) {
+      const targets = bySource.get(source) ?? [];
+      targets.push(target);
+      bySource.set(source, targets);
+    }
+    return [...bySource.entries()].sort(([a], [b]) => a.localeCompare(b));
+  }, [graph]);
+
   // Resolves a cited stem to title + category for the chat chips.
   const nodeByStem = useMemo(() => {
     const map = new Map<string, { title: string; category: string }>();
@@ -135,9 +149,49 @@ function VaultPage() {
           {stats && (
             <p className="font-mono text-xs text-muted-foreground">
               {stats.n_nodes} nodes · {stats.n_links} links ·{" "}
-              <span className={stats.n_unresolved > 0 ? "text-destructive" : undefined}>
-                {stats.n_unresolved} unresolved
-              </span>{" "}
+              {stats.n_unresolved > 0 ? (
+                <span className="relative">
+                  <button
+                    onClick={() => setUnresolvedOpen((v) => !v)}
+                    className="text-destructive underline decoration-dotted underline-offset-2 hover:opacity-80"
+                  >
+                    {stats.n_unresolved} unresolved
+                  </button>
+
+                  {unresolvedOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setUnresolvedOpen(false)}
+                      />
+                      <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-border bg-surface p-2 text-left font-sans shadow-panel">
+                        <p className="px-2 py-1 text-[11px] text-muted-foreground">
+                          Pages with a [[link]] that doesn't resolve
+                        </p>
+                        <div className="max-h-72 overflow-y-auto">
+                          {unresolvedBySource.map(([source, targets]) => (
+                            <button
+                              key={source}
+                              onClick={() => {
+                                setSelectedStem(source);
+                                setUnresolvedOpen(false);
+                              }}
+                              className="block w-full rounded-lg px-2 py-1.5 text-left text-xs transition-colors hover:bg-elevated"
+                            >
+                              <span className="text-foreground">{source}</span>
+                              <span className="ml-1.5 text-muted-foreground">
+                                → {targets.join(", ")}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </span>
+              ) : (
+                <span>{stats.n_unresolved} unresolved</span>
+              )}{" "}
               · {stats.n_orphans} orphans
             </p>
           )}

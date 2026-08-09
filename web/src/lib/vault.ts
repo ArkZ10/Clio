@@ -43,6 +43,8 @@ export function colorForCategory(category: string): string {
 
 export type VaultNode = { id: string; title: string; category: string };
 export type VaultLink = { source: string; target: string };
+/** A `[[target]]` written in `source` that doesn't resolve to a real page. */
+export type VaultUnresolvedLink = { source: string; target: string };
 export type VaultStats = {
   n_nodes: number;
   n_links: number;
@@ -52,6 +54,7 @@ export type VaultStats = {
 export type VaultGraph = {
   nodes: VaultNode[];
   links: VaultLink[];
+  unresolved: VaultUnresolvedLink[];
   categories: string[];
   stats: VaultStats;
 };
