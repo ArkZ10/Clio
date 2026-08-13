@@ -9,6 +9,7 @@ import {
   FileText,
   Library as LibraryIcon,
   MessageSquare,
+  Search,
   X,
 } from "lucide-react";
 import { ChatSurface } from "@/components/clio/chat-surface";
@@ -114,6 +115,7 @@ function LibraryPage() {
   const [selectedStem, setSelectedStem] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const viewerScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -162,6 +164,22 @@ function LibraryPage() {
   );
 
   const papers = libraryQuery.data?.papers ?? [];
+
+  // Client-side: the library is a small curated list already loaded in
+  // full, so a live filter over what's in memory beats round-tripping to
+  // the backend for something this size.
+  const filteredPapers = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return papers;
+    return papers.filter(
+      (p) =>
+        p.title.toLowerCase().includes(q) ||
+        p.authors.some((a) => a.toLowerCase().includes(q)) ||
+        p.venue?.toLowerCase().includes(q) ||
+        p.status?.toLowerCase().includes(q),
+    );
+  }, [papers, query]);
+
   const openPaper = (stem: string, mode: ViewMode) => {
     setSelectedStem(stem);
     setViewMode(mode);
@@ -213,7 +231,32 @@ function LibraryPage() {
           <div className="flex h-full min-h-0 gap-4">
             {/* List pane */}
             <div className="flex min-h-0 w-full max-w-sm flex-col gap-2 overflow-y-auto rounded-xl border border-border bg-surface p-3">
-              {papers.map((paper) => (
+              <div className="flex items-center gap-2 rounded-lg border border-border bg-elevated px-2.5 py-1.5">
+                <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search title, author, venue…"
+                  className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground/70"
+                />
+                {query && (
+                  <button
+                    onClick={() => setQuery("")}
+                    className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {filteredPapers.length === 0 && (
+                <p className="px-1 py-3 text-center text-xs text-muted-foreground">
+                  No papers match "{query}"
+                </p>
+              )}
+
+              {filteredPapers.map((paper) => (
                 <PaperListItem
                   key={paper.stem}
                   paper={paper}
